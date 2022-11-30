@@ -34,14 +34,16 @@ For class based views, all handler methods must be async, otherwise Django will 
 
 For example:
 
-    from adrf.views import APIView
+```python
+from adrf.views import APIView
 
-    class AsyncView(APIView):
-        async def get(self, request):
-            return Response({"message": "This is an async class based view."})
+class AsyncView(APIView):
+    async def get(self, request):
+        return Response({"message": "This is an async class based view."})
 
-    from adrf.decorators import api_view
+from adrf.decorators import api_view
 
-    @api_view(['GET'])
-    async def async_view(request):
-        return Response({"message": "This is an async function based view."})
+@api_view(['GET'])
+async def async_view(request):
+    return Response({"message": "This is an async function based view."})
+```
