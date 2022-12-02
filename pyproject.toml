@@ -21,6 +21,7 @@ djangorestframework = ">=3.14.0"
 pytest = "^7.2.0"
 pytest_cov = "^4.0.0"
 pytest-django = "^4.5.2"
+tox = "^3.27.1"
 
 [build-system]
 requires = ["poetry-core"]
