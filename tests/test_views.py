@@ -80,6 +80,7 @@ class ClassBasedViewIntegrationTests(TestCase):
     def test_logged_in_get_succeeds(self):
         user = User.objects.create_user('user', 'user@example.com', 'password')
         request = factory.get('/')
+        # del is used to force the ORM to query the user object again
         del user.is_active
         request.user = user
         response = self.view(request)
@@ -124,6 +125,7 @@ class FunctionBasedViewIntegrationTests(TestCase):
     def test_logged_in_get_succeeds(self):
         user = User.objects.create_user('user', 'user@example.com', 'password')
         request = factory.get('/')
+        # del is used to force the ORM to query the user object again
         del user.is_active
         request.user = user
         response = self.view(request)
@@ -168,6 +170,7 @@ class ClassBasedAsyncViewIntegrationTests(TestCase):
     def test_logged_in_get_succeeds(self):
         user = User.objects.create_user('user', 'user@example.com', 'password')
         request = factory.get('/')
+        # del is used to force the ORM to query the user object again
         del user.is_active
         request.user = user
         response = async_to_sync(self.view)(request)
@@ -212,6 +215,7 @@ class FunctionBasedAsyncViewIntegrationTests(TestCase):
     def test_logged_in_get_succeeds(self):
         user = User.objects.create_user('user', 'user@example.com', 'password')
         request = factory.get('/')
+        # del is used to force the ORM to query the user object again
         del user.is_active
         request.user = user
         response = async_to_sync(self.view)(request)
