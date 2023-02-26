@@ -24,7 +24,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-# Example
+# Examples
 
 # Async Views
 
@@ -46,4 +46,47 @@ from adrf.decorators import api_view
 @api_view(['GET'])
 async def async_view(request):
     return Response({"message": "This is an async function based view."})
+```
+# Async ViewSets
+
+For viewsets, all handler methods must be async too.
+
+views.py
+```python
+from django.contrib.auth import get_user_model
+from rest_framework.response import Response
+
+from adrf.viewsets import ViewSet
+
+
+User = get_user_model()
+
+
+class AsyncViewSet(ViewSet):
+
+    async def list(self, request):
+        return Response(
+            {"message": "This is the async `list` method of the viewset."}
+        )
+
+    async def retrieve(self, request, pk):
+        user = await User.objects.filter(pk=pk).afirst()
+        return Response({"user_pk": user and user.pk})
+
+```
+
+urls.py
+```python
+from django.urls import path, include
+from rest_framework import routers
+
+from . import views
+
+router = routers.DefaultRouter()
+router.register(r"async_viewset", views.AsyncViewSet, basename="async")
+
+urlpatterns = [
+    path("", include(router.urls)),
+]
+
 ```
