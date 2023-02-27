@@ -6,7 +6,6 @@ from adrf.viewsets import ViewSet
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
-
 from tests.test_views import JSON_ERROR, sanitise_json_error
 
 factory = APIRequestFactory()

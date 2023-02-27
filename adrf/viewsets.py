@@ -1,10 +1,11 @@
 import asyncio
 from functools import update_wrapper
 
-from adrf.views import APIView
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.decorators import classonlymethod
 from django.utils.functional import classproperty
+
+from adrf.views import APIView
 from rest_framework.viewsets import ViewSetMixin as DRFViewSetMixin
 
 
@@ -115,7 +116,7 @@ class ViewSetMixin(DRFViewSetMixin):
             return await self.dispatch(request, *args, **kwargs)
 
         view = async_view if cls.view_is_async else view
-        
+
         # take name and docstring from class
         update_wrapper(view, cls, updated=())
 
