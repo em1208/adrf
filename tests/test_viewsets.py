@@ -12,7 +12,6 @@ factory = APIRequestFactory()
 
 
 class BasicViewSet(ViewSet):
-
     def list(self, request):
         return Response({'method': 'GET'})
 
@@ -21,7 +20,6 @@ class BasicViewSet(ViewSet):
 
 
 class AsyncViewSet(ViewSet):
-
     async def list(self, request):
         return Response({'method': 'GET'})
 
@@ -30,7 +28,6 @@ class AsyncViewSet(ViewSet):
 
 
 class ViewSetIntegrationTests(TestCase):
-
     def setUp(self):
         self.list = BasicViewSet.as_view({"get": "list"})
         self.create = BasicViewSet.as_view({"post": "create"})
