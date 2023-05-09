@@ -5,7 +5,7 @@
 # Requirements
 
 * Python 3.8+
-* Django 4.1
+* Django 4.1+
 
 We **highly recommend** and only officially support the latest patch release of
 each Python and Django series.
