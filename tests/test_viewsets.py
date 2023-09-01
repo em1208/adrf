@@ -1,10 +1,12 @@
 from asgiref.sync import async_to_sync
 from django.contrib.auth.models import User
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 from adrf.viewsets import ViewSet
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 from rest_framework.test import APIRequestFactory
 from tests.test_views import JSON_ERROR, sanitise_json_error
 
@@ -117,3 +119,28 @@ class AsyncViewSetIntegrationTests(TestCase):
         }
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert sanitise_json_error(response.data) == expected
+
+
+class MisconfiguredViewSetIntegrationTests(TestCase):
+    def test_as_view_raises_misconfigured_exception(self):
+        class MisconfiguredViewSet(AsyncViewSet):
+            def destroy(self, request):
+                return Response({'method': 'DELETE'})
+
+        with self.assertRaises(ImproperlyConfigured):
+            MisconfiguredViewSet.as_view({"get": "list", "delete": "destroy"})
+
+    def test_as_view_does_not_raise_if_non_action_handler_is_sync(self):
+        class SafeSerializer(BaseSerializer):
+            ...
+
+        class SafeViewSet(AsyncViewSet):
+            serializer_class = SafeSerializer
+
+            def my_func(self):
+                pass
+
+        try:
+            SafeViewSet.as_view({'delete': 'destroy'})
+        except ImproperlyConfigured as exc:
+            self.fail('ImproperlyConfigured unexpectedly raised', exc)

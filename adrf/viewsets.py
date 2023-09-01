@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from functools import update_wrapper
 
 from django.core.exceptions import ImproperlyConfigured
@@ -134,6 +135,32 @@ class ViewSetMixin(DRFViewSetMixin):
         return view
 
 
+def _is_action_handler(name, function):
+    # These attributes are added by DRF's `@action` decorator
+    # and are a consistent, if potentially flaky, indicator that
+    # class method is a view handler
+    action_decorator_attributes = ("url_path", "url_name", "mapping")
+
+    # This covers the gamut of DRF action handler names including
+    # generic viewset methods
+    drf_generic_action_handler_names = (
+        "get",
+        "post",
+        "put",
+        "delete",
+        "retrieve",
+        "create",
+        "list",
+        "destroy",
+        "update",
+    )
+
+    return callable(function) and (
+        all(hasattr(function, attr) for attr in action_decorator_attributes) or
+        name in drf_generic_action_handler_names
+    )
+
+
 class ViewSet(ViewSetMixin, APIView):
 
     @classproperty
@@ -143,8 +170,11 @@ class ViewSet(ViewSetMixin, APIView):
         """
         result = [
             asyncio.iscoroutinefunction(function)
-            for name, function in cls.__dict__.items()
-            if callable(function) and not name.startswith("__")
+            # Use `getmembers_static` to avoid `view_is_async` causing
+            # infinite recursion. Use it instead of `__dict__` to include
+            # base classes.
+            for name, function in inspect.getmembers_static(cls)
+            if _is_action_handler(name, function)
         ]
         is_async = any(result)
         if is_async and not all(result):
