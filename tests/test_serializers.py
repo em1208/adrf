@@ -1,7 +1,5 @@
 from collections import ChainMap
-from operator import attrgetter
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
 from adrf.serializers import Serializer

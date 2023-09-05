@@ -1,16 +1,18 @@
-import asyncio
 import traceback
 from collections import OrderedDict
 
 from async_property import async_property
 from django.db import models
 
+from rest_framework.serializers import LIST_SERIALIZER_KWARGS
 from rest_framework.serializers import BaseSerializer as DRFBaseSerializer
 from rest_framework.serializers import ListSerializer as DRFListSerializer
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
 from rest_framework.serializers import Serializer as DRFSerializer
+from rest_framework.serializers import \
+    SerializerMetaclass as DRFSerializerMetaclass
 from rest_framework.serializers import (
-    SerializerMetaclass as DRFSerializerMetaclass,
+    model_meta, raise_errors_on_nested_writes
 )
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 
@@ -163,8 +165,6 @@ class Serializer(BaseSerializer, _Serializer, DRFSerializer):
 
         ret = OrderedDict()
         fields = self._readable_fields
-
-        drf_fields = DRFModelSerializer.serializer_field_mapping.values()
 
         for field in fields:
             try:
