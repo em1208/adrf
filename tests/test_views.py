@@ -34,6 +34,12 @@ class BasicView(APIView):
     def post(self, request, *args, **kwargs):
         return Response({'method': 'POST', 'data': request.data})
 
+    def put(self, request, *args, **kwargs):
+        return Response({'method': 'PUT', 'data': request.data})
+
+    def patch(self, request, *args, **kwargs):
+        return Response({'method': 'PATCH', 'data': request.data})
+
 
 class BasicAsyncView(APIView):
     async def get(self, request, *args, **kwargs):
@@ -41,6 +47,12 @@ class BasicAsyncView(APIView):
 
     async def post(self, request, *args, **kwargs):
         return Response({'method': 'POST', 'data': request.data})
+
+    async def put(self, request, *args, **kwargs):
+        return Response({'method': 'PUT', 'data': request.data})
+
+    async def patch(self, request, *args, **kwargs):
+        return Response({'method': 'PATCH', 'data': request.data})
 
 
 @api_view(['GET', 'POST', 'PUT', 'PATCH'])
@@ -97,6 +109,26 @@ class ClassBasedViewIntegrationTests(TestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data == expected
 
+    def test_patch_succeeds(self):
+        request = factory.patch('/', {'test': 'foo'})
+        response = self.view(request)
+        expected = {
+            'method': 'PATCH',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
+    def test_put_succeeds(self):
+        request = factory.put('/', {'test': 'foo'})
+        response = self.view(request)
+        expected = {
+            'method': 'PUT',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
     def test_options_succeeds(self):
         request = factory.options('/')
         response = self.view(request)
@@ -137,6 +169,26 @@ class FunctionBasedViewIntegrationTests(TestCase):
         response = self.view(request)
         expected = {
             'method': 'POST',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
+    def test_patch_succeeds(self):
+        request = factory.patch('/', {'test': 'foo'})
+        response = self.view(request)
+        expected = {
+            'method': 'PATCH',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
+    def test_put_succeeds(self):
+        request = factory.put('/', {'test': 'foo'})
+        response = self.view(request)
+        expected = {
+            'method': 'PUT',
             'data': {'test': ['foo']}
         }
         assert response.status_code == status.HTTP_200_OK
@@ -187,6 +239,26 @@ class ClassBasedAsyncViewIntegrationTests(TestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data == expected
 
+    def test_patch_succeeds(self):
+        request = factory.patch('/', {'test': 'foo'})
+        response = async_to_sync(self.view)(request)
+        expected = {
+            'method': 'PATCH',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
+    def test_put_succeeds(self):
+        request = factory.put('/', {'test': 'foo'})
+        response = async_to_sync(self.view)(request)
+        expected = {
+            'method': 'PUT',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
     def test_options_succeeds(self):
         request = factory.options('/')
         response = async_to_sync(self.view)(request)
@@ -227,6 +299,26 @@ class FunctionBasedAsyncViewIntegrationTests(TestCase):
         response = async_to_sync(self.view)(request)
         expected = {
             'method': 'POST',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
+    def test_patch_succeeds(self):
+        request = factory.patch('/', {'test': 'foo'})
+        response = async_to_sync(self.view)(request)
+        expected = {
+            'method': 'PATCH',
+            'data': {'test': ['foo']}
+        }
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected
+
+    def test_put_succeeds(self):
+        request = factory.put('/', {'test': 'foo'})
+        response = async_to_sync(self.view)(request)
+        expected = {
+            'method': 'PUT',
             'data': {'test': ['foo']}
         }
         assert response.status_code == status.HTTP_200_OK

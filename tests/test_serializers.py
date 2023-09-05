@@ -1,8 +1,10 @@
 from collections import ChainMap
 
+from asgiref.sync import sync_to_async
+from django.contrib.auth.models import User
 from django.test import TestCase
 
-from adrf.serializers import Serializer
+from adrf.serializers import ModelSerializer, Serializer
 from rest_framework import serializers
 from rest_framework.test import APIRequestFactory
 
@@ -16,15 +18,6 @@ class MockObject:
 
         for key, val in kwargs.items():
             setattr(self, key, val)
-
-    def __str__(self):
-        kwargs_str = ", ".join(
-            [
-                "%s=%s" % (key, value)
-                for key, value in sorted(self._kwargs.items())
-            ]
-        )
-        return "<MockObject %s>" % kwargs_str
 
 
 # replace with django test case
@@ -46,8 +39,14 @@ class TestSerializer(TestCase):
             async def aupdate(self, instance, validated_data):
                 return MockObject(**validated_data)
 
+        class MyModelSerializer(ModelSerializer):
+            class Meta:
+                model = User
+                fields = ('username', )
+
         self.simple_serializer = SimpleSerializer
         self.crud_serializer = CrudSerializer
+        self.model_serializer = MyModelSerializer
 
         self.default_data = {
             "username": "test",
@@ -63,7 +62,16 @@ class TestSerializer(TestCase):
             "age": 10,
         }
         serializer = self.simple_serializer(data=data)
-        assert serializer.is_valid() is True
+        assert serializer.is_valid()
+        assert await serializer.adata == data
+        assert serializer.errors == {}
+
+    async def test_modelserializer_valid(self):
+        data = {
+            "username": "test",
+        }
+        serializer = self.model_serializer(data=data)
+        assert await sync_to_async(serializer.is_valid)()
         assert await serializer.adata == data
         assert serializer.errors == {}
 
@@ -78,6 +86,20 @@ class TestSerializer(TestCase):
         assert serializer.validated_data == {}
         assert await serializer.adata == data
         assert serializer.errors == {"age": ["This field is required."]}
+
+    async def test_many_argument(self):
+        data = [
+            {
+                "username": "test",
+                "password": "test",
+                "age": 10,
+            }
+        ]
+        serializer = self.simple_serializer(data=data, many=True)
+
+        assert serializer.is_valid()
+        assert serializer.validated_data == data
+        assert await serializer.adata == data
 
     async def test_invalid_datatype(self):
         data = [
@@ -123,7 +145,6 @@ class TestSerializer(TestCase):
         }
         assert serializer.errors == {}
 
-    # now we test the crud serializer
     async def test_crud_serializer_create(self):
         # Create a valid data payload
         data = self.default_data
@@ -207,13 +228,13 @@ class TestSerializer(TestCase):
         assert representation["age"] == default_object.age
 
     # test that normal non-async serializers work
-    def test_async_serializer_valid(self):
+    def test_sync_serializer_valid(self):
         data = {
             "username": "test",
             "password": "test",
             "age": 10,
         }
         serializer = self.simple_serializer(data=data)
-        assert serializer.is_valid() is True
+        assert serializer.is_valid()
         assert serializer.data == data
         assert serializer.errors == {}

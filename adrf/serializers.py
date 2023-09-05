@@ -4,6 +4,7 @@ from collections import OrderedDict
 from async_property import async_property
 from django.db import models
 
+from rest_framework.fields import SkipField
 from rest_framework.serializers import LIST_SERIALIZER_KWARGS
 from rest_framework.serializers import BaseSerializer as DRFBaseSerializer
 from rest_framework.serializers import ListSerializer as DRFListSerializer
@@ -16,52 +17,32 @@ from rest_framework.serializers import (
 )
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 
-from rest_framework.fields import (  # NOQA # isort:skip
-    Field,
-)
-
-
-from rest_framework.fields import (  # NOQA # isort:skip
-    SkipField,
-)
-
 
 class BaseSerializer(DRFBaseSerializer):
     """
     Base serializer class.
     """
-
     @classmethod
     def many_init(cls, *args, **kwargs):
-        allow_empty = kwargs.pop("allow_empty", None)
-        max_length = kwargs.pop("max_length", None)
-        min_length = kwargs.pop("min_length", None)
+        allow_empty = kwargs.pop('allow_empty', None)
+        max_length = kwargs.pop('max_length', None)
+        min_length = kwargs.pop('min_length', None)
         child_serializer = cls(*args, **kwargs)
-        list_kwargs = {"child": child_serializer}
-
+        list_kwargs = {
+            'child': child_serializer,
+        }
         if allow_empty is not None:
-            list_kwargs["allow_empty"] = allow_empty
-
+            list_kwargs['allow_empty'] = allow_empty
         if max_length is not None:
-            list_kwargs["max_length"] = max_length
-
+            list_kwargs['max_length'] = max_length
         if min_length is not None:
-            list_kwargs["min_length"] = min_length
-
-        list_kwargs.update(
-            {
-                key: value
-                for key, value in kwargs.items()
-                if key in LIST_SERIALIZER_KWARGS
-            }
-        )
-
-        meta = getattr(cls, "Meta", None)
-
-        list_serializer_class = getattr(
-            meta, "list_serializer_class", ListSerializer
-        )
-
+            list_kwargs['min_length'] = min_length
+        list_kwargs.update({
+            key: value for key, value in kwargs.items()
+            if key in LIST_SERIALIZER_KWARGS
+        })
+        meta = getattr(cls, 'Meta', None)
+        list_serializer_class = getattr(meta, 'list_serializer_class', ListSerializer)
         return list_serializer_class(*args, **list_kwargs)
 
     @async_property
@@ -213,7 +194,7 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
 
         data = []
 
-        async for item in iterable:
+        for item in iterable:
             data.append(await self.child.ato_representation(item))
 
         return data
@@ -262,8 +243,6 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
         return ReturnList(ret, serializer=self)
 
     async def acreate(self, validated_data):
-        # return [self.child.create(attrs) for attrs in validated_data]
-
         return [await self.child.acreate(attrs) for attrs in validated_data]
 
 
