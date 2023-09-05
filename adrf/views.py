@@ -1,3 +1,5 @@
+import asyncio
+
 from asgiref.sync import sync_to_async
 
 from rest_framework import status
@@ -57,7 +59,10 @@ class APIView(DRFAPIView):
             else:
                 handler = self.http_method_not_allowed
 
-            response = await handler(request, *args, **kwargs)
+            if asyncio.iscoroutinefunction(handler):
+                response = await handler(request, *args, **kwargs)
+            else:
+                response = await sync_to_async(handler)(request, *args, **kwargs)
 
         except Exception as exc:
             response = self.handle_exception(exc)
@@ -74,21 +79,3 @@ class APIView(DRFAPIView):
             return self.async_dispatch(request, *args, **kwargs)
         else:
             return self.sync_dispatch(request, *args, **kwargs)
-
-    def options(self, request, *args, **kwargs):
-        """
-        Handler method for HTTP 'OPTIONS' request.
-        """
-        def func():
-            if self.metadata_class is None:
-                return self.http_method_not_allowed(request, *args, **kwargs)
-            data = self.metadata_class().determine_metadata(request, self)
-            return Response(data, status=status.HTTP_200_OK)
-
-        if getattr(self, 'view_is_async', False):
-            async def handler():
-                return await sync_to_async(func)()
-        else:
-            def handler():
-                return func()
-        return handler()

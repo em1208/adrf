@@ -1,7 +1,6 @@
 import asyncio
 from functools import update_wrapper
 
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.decorators import classonlymethod
 from django.utils.functional import classproperty
 
@@ -139,17 +138,11 @@ class ViewSet(ViewSetMixin, APIView):
     @classproperty
     def view_is_async(cls):
         """
-        Checks whether viewset methods are coroutines.
+        Checks whether any viewset methods are coroutines.
         """
         result = [
             asyncio.iscoroutinefunction(function)
             for name, function in cls.__dict__.items()
             if callable(function) and not name.startswith("__")
         ]
-        is_async = any(result)
-        if is_async and not all(result):
-            raise ImproperlyConfigured(
-                f"{cls.__qualname__} action handlers must either be all sync "
-                "or all async."
-            )
-        return is_async
+        return any(result)
