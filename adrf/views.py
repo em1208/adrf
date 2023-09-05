@@ -2,8 +2,6 @@ import asyncio
 
 from asgiref.sync import sync_to_async
 
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.views import APIView as DRFAPIView
 
 
