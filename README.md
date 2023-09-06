@@ -90,3 +90,35 @@ urlpatterns = [
 ]
 
 ```
+
+# Async Serializers
+
+serializers.py
+
+```python
+from adrf.serializers import Serializer
+from rest_framework import serializers
+
+class AsyncSerializer(Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+    age = serializers.IntegerField()
+```
+
+views.py
+
+```python
+from . import serializers
+from adrf.views import APIView
+
+class AsyncView(APIView):
+    async def get(self, request):
+        data = {
+            "username": "test",
+            "password": "test",
+            "age": 10,
+        }
+        serializer = serializers.AsyncSerializer(data=data)
+        serializer.is_valid()
+        return await serializer.adata
+```
