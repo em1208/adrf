@@ -22,27 +22,31 @@ class BaseSerializer(DRFBaseSerializer):
     """
     Base serializer class.
     """
+
     @classmethod
     def many_init(cls, *args, **kwargs):
-        allow_empty = kwargs.pop('allow_empty', None)
-        max_length = kwargs.pop('max_length', None)
-        min_length = kwargs.pop('min_length', None)
+        allow_empty = kwargs.pop("allow_empty", None)
+        max_length = kwargs.pop("max_length", None)
+        min_length = kwargs.pop("min_length", None)
         child_serializer = cls(*args, **kwargs)
         list_kwargs = {
-            'child': child_serializer,
+            "child": child_serializer,
         }
         if allow_empty is not None:
-            list_kwargs['allow_empty'] = allow_empty
+            list_kwargs["allow_empty"] = allow_empty
         if max_length is not None:
-            list_kwargs['max_length'] = max_length
+            list_kwargs["max_length"] = max_length
         if min_length is not None:
-            list_kwargs['min_length'] = min_length
+            list_kwargs["min_length"] = min_length
         list_kwargs.update({
-            key: value for key, value in kwargs.items()
+            key: value
+            for key, value in kwargs.items()
             if key in LIST_SERIALIZER_KWARGS
         })
-        meta = getattr(cls, 'Meta', None)
-        list_serializer_class = getattr(meta, 'list_serializer_class', ListSerializer)
+        meta = getattr(cls, "Meta", None)
+        list_serializer_class = getattr(
+            meta, "list_serializer_class", ListSerializer
+        )
         return list_serializer_class(*args, **list_kwargs)
 
     @async_property
@@ -166,11 +170,6 @@ class Serializer(BaseSerializer, _Serializer, DRFSerializer):
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                # if asyncio.iscoroutinefunction(field.ato_representation):
-                #     repr = await field.ato_representation(attribute)
-                # else:
-                #     repr = field.ato_representation(attribute)
-                # drf fields doesn't have ato_representation they have to_representation. we adjust the above code to work with both
 
                 if is_drf_field:
                     repr = field.to_representation(attribute)
@@ -190,14 +189,16 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
         # Dealing with nested relationships, data can be a Manager,
         # so, first get a queryset from the Manager if needed
 
-        iterable = data.all() if isinstance(data, models.Manager) else data
+        if isinstance(data, models.Manager):
+            data = data.all()
 
-        data = []
-
-        for item in iterable:
-            data.append(await self.child.ato_representation(item))
-
-        return data
+        if isinstance(data, models.query.QuerySet):
+            return [
+                await self.child.ato_representation(item)
+                async for item in data
+            ]
+        else:
+            return [await self.child.ato_representation(item) for item in data]
 
     async def asave(self, **kwargs):
         """

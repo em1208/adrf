@@ -37,7 +37,32 @@ For example:
 ```python
 from adrf.views import APIView
 
+class AsyncAuthentication(BaseAuthentication):
+    async def authenticate(self, request) -> tuple[User, None]:
+        return user, None
+
+class AsyncPermission:
+    def has_permission(self, request, view) -> bool:
+        if random.random() < 0.7:
+            return False
+
+        return True
+
+class AsyncThrottle(BaseThrottle):
+    def allow_request(self, request, view) -> bool:
+        if random.random() < 0.7:
+            return False
+
+        return True
+
+    def wait(self):
+        return 3
+
 class AsyncView(APIView):
+    authentication_classes = [AsyncAuthentication]
+    permission_classes = [AsyncPermission]
+    throttle_classes = [AsyncThrottle]
+
     async def get(self, request):
         return Response({"message": "This is an async class based view."})
 

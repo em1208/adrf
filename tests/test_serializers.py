@@ -42,7 +42,7 @@ class TestSerializer(TestCase):
         class MyModelSerializer(ModelSerializer):
             class Meta:
                 model = User
-                fields = ('username', )
+                fields = ("username",)
 
         self.simple_serializer = SimpleSerializer
         self.crud_serializer = CrudSerializer
@@ -88,13 +88,11 @@ class TestSerializer(TestCase):
         assert serializer.errors == {"age": ["This field is required."]}
 
     async def test_many_argument(self):
-        data = [
-            {
-                "username": "test",
-                "password": "test",
-                "age": 10,
-            }
-        ]
+        data = [{
+            "username": "test",
+            "password": "test",
+            "age": 10,
+        }]
         serializer = self.simple_serializer(data=data, many=True)
 
         assert serializer.is_valid()
@@ -102,13 +100,11 @@ class TestSerializer(TestCase):
         assert await serializer.adata == data
 
     async def test_invalid_datatype(self):
-        data = [
-            {
-                "username": "test",
-                "password": "test",
-                "age": 10,
-            }
-        ]
+        data = [{
+            "username": "test",
+            "password": "test",
+            "age": 10,
+        }]
         serializer = self.simple_serializer(data=data)
 
         assert not serializer.is_valid()
