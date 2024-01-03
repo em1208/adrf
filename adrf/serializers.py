@@ -157,10 +157,9 @@ class Serializer(BaseSerializer, _Serializer, DRFSerializer):
             except SkipField:
                 continue
 
-            is_drf_field = (
-                type(field)
-                in DRFModelSerializer.serializer_field_mapping.values()
-            )
+            is_drf_field = type(field) in list(
+                DRFModelSerializer.serializer_field_mapping.values()
+            ) + [DRFModelSerializer.serializer_choice_field]
 
             check_for_none = (
                 attribute.pk
