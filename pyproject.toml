@@ -23,6 +23,7 @@ pytest_cov = "^4.0.0"
 pytest-django = "^4.5.2"
 tox = "^3.27.1"
 tox-py = "^1.3.0"
+faker = "^22.0.0"
 
 [build-system]
 requires = ["poetry-core"]
