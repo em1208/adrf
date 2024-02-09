@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "adrf"
-version = "0.1.3"
+version = "0.1.4"
 description = "Async support for Django REST framework"
 authors = ["Enrico Massa <enrico.massa@gmail.com>"]
 keywords = ["async", "django", "rest", "framework", "drf"]
