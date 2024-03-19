@@ -88,11 +88,13 @@ class TestSerializer(TestCase):
         assert serializer.errors == {"age": ["This field is required."]}
 
     async def test_many_argument(self):
-        data = [{
-            "username": "test",
-            "password": "test",
-            "age": 10,
-        }]
+        data = [
+            {
+                "username": "test",
+                "password": "test",
+                "age": 10,
+            }
+        ]
         serializer = self.simple_serializer(data=data, many=True)
 
         assert serializer.is_valid()
@@ -100,11 +102,13 @@ class TestSerializer(TestCase):
         assert await serializer.adata == data
 
     async def test_invalid_datatype(self):
-        data = [{
-            "username": "test",
-            "password": "test",
-            "age": 10,
-        }]
+        data = [
+            {
+                "username": "test",
+                "password": "test",
+                "age": 10,
+            }
+        ]
         serializer = self.simple_serializer(data=data)
 
         assert not serializer.is_valid()
@@ -112,9 +116,7 @@ class TestSerializer(TestCase):
         assert await serializer.adata == {}
 
         assert serializer.errors == {
-            "non_field_errors": [
-                "Invalid data. Expected a dictionary, but got list."
-            ]
+            "non_field_errors": ["Invalid data. Expected a dictionary, but got list."]
         }
 
     async def test_partial_validation(self):

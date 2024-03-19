@@ -10,11 +10,8 @@ from rest_framework.serializers import BaseSerializer as DRFBaseSerializer
 from rest_framework.serializers import ListSerializer as DRFListSerializer
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
 from rest_framework.serializers import Serializer as DRFSerializer
-from rest_framework.serializers import \
-    SerializerMetaclass as DRFSerializerMetaclass
-from rest_framework.serializers import (
-    model_meta, raise_errors_on_nested_writes
-)
+from rest_framework.serializers import SerializerMetaclass as DRFSerializerMetaclass
+from rest_framework.serializers import model_meta, raise_errors_on_nested_writes
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 
 
@@ -38,22 +35,20 @@ class BaseSerializer(DRFBaseSerializer):
             list_kwargs["max_length"] = max_length
         if min_length is not None:
             list_kwargs["min_length"] = min_length
-        list_kwargs.update({
-            key: value
-            for key, value in kwargs.items()
-            if key in LIST_SERIALIZER_KWARGS
-        })
-        meta = getattr(cls, "Meta", None)
-        list_serializer_class = getattr(
-            meta, "list_serializer_class", ListSerializer
+        list_kwargs.update(
+            {
+                key: value
+                for key, value in kwargs.items()
+                if key in LIST_SERIALIZER_KWARGS
+            }
         )
+        meta = getattr(cls, "Meta", None)
+        list_serializer_class = getattr(meta, "list_serializer_class", ListSerializer)
         return list_serializer_class(*args, **list_kwargs)
 
     @async_property
     async def adata(self):
-        if hasattr(self, "initial_data") and not hasattr(
-            self, "_validated_data"
-        ):
+        if hasattr(self, "initial_data") and not hasattr(self, "_validated_data"):
             msg = (
                 "When a serializer is passed a `data` keyword argument you "
                 "must call `.is_valid()` before attempting to access the "
@@ -64,9 +59,7 @@ class BaseSerializer(DRFBaseSerializer):
             raise AssertionError(msg)
 
         if not hasattr(self, "_data"):
-            if self.instance is not None and not getattr(
-                self, "_errors", None
-            ):
+            if self.instance is not None and not getattr(self, "_errors", None):
                 self._data = await self.ato_representation(self.instance)
             elif hasattr(self, "_validated_data") and not getattr(
                 self, "_errors", None
@@ -78,9 +71,7 @@ class BaseSerializer(DRFBaseSerializer):
         return self._data
 
     async def ato_representation(self, instance):
-        raise NotImplementedError(
-            "`ato_representation()` must be implemented."
-        )
+        raise NotImplementedError("`ato_representation()` must be implemented.")
 
     async def aupdate(self, instance, validated_data):
         raise NotImplementedError("`aupdate()` must be implemented.")
@@ -162,14 +153,11 @@ class Serializer(BaseSerializer, _Serializer, DRFSerializer):
             ) + [DRFModelSerializer.serializer_choice_field]
 
             check_for_none = (
-                attribute.pk
-                if isinstance(attribute, models.Model)
-                else attribute
+                attribute.pk if isinstance(attribute, models.Model) else attribute
             )
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-
                 if is_drf_field:
                     repr = field.to_representation(attribute)
                 else:
@@ -192,10 +180,7 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
             data = data.all()
 
         if isinstance(data, models.query.QuerySet):
-            return [
-                await self.child.ato_representation(item)
-                async for item in data
-            ]
+            return [await self.child.ato_representation(item) async for item in data]
         else:
             return [await self.child.ato_representation(item) for item in data]
 
@@ -262,9 +247,7 @@ class ModelSerializer(Serializer, DRFModelSerializer):
                 many_to_many[field_name] = validated_data.pop(field_name)
 
         try:
-            instance = await ModelClass._default_manager.acreate(
-                **validated_data
-            )
+            instance = await ModelClass._default_manager.acreate(**validated_data)
         except TypeError:
             tb = traceback.format_exc()
             msg = (

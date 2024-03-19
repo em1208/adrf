@@ -34,7 +34,7 @@ class AsyncAuthentication(BaseAuthentication):
         if not auth.startswith(self.keyword):
             return None
 
-        token = auth[len(self.keyword):].strip()
+        token = auth[len(self.keyword) :].strip()
 
         if token != "admitme":
             raise AuthenticationFailed("Invalid token")
@@ -62,6 +62,7 @@ class TestAsyncAuthentication(TestCase):
         response = await MockView.as_view()(request)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(request.user, faked_user)
 
     async def test_reject_customtoken(self):
         auth = "Bearer expired"
