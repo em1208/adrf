@@ -9,15 +9,10 @@ def api_view(http_method_names=None):
     Decorator that converts a function-based view into an APIView subclass.
     Takes a list of allowed methods for the view as an argument.
     """
-    http_method_names = (
-        ["GET"] if (http_method_names is None) else http_method_names
-    )
+    http_method_names = ["GET"] if (http_method_names is None) else http_method_names
 
     def decorator(func):
-
-        WrappedAPIView = type(
-            "WrappedAPIView", (APIView,), {"__doc__": func.__doc__}
-        )
+        WrappedAPIView = type("WrappedAPIView", (APIView,), {"__doc__": func.__doc__})
 
         # Note, the above allows us to set the docstring.
         # It is the equivalent of:

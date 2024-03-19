@@ -44,12 +44,9 @@ class AsyncRequest(Request):
         self._authenticator, self.user, self.auth = None, None, None
 
         for authenticator in self.authenticators:
-
             try:
                 if asyncio.iscoroutinefunction(authenticator.authenticate):
-                    user_auth_tuple = async_to_sync(
-                        authenticator.authenticate
-                    )(self)
+                    user_auth_tuple = async_to_sync(authenticator.authenticate)(self)
                 else:
                     user_auth_tuple = authenticator.authenticate(self)
             except exceptions.APIException:

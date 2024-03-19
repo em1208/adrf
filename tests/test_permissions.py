@@ -63,17 +63,13 @@ class TestSyncPermission(TestCase):
     async def test_sync_permission(self):
         request = factory.get("/view/sync/allow/")
 
-        response = await MockView.as_view(
-            permission_classes=(SyncPermission,)
-        )(request)
+        response = await MockView.as_view(permission_classes=(SyncPermission,))(request)
 
         self.assertEqual(response.status_code, 200)
 
     async def test_sync_permission_reject(self):
         request = factory.get("/view/sync/reject/")
 
-        response = await MockView.as_view(
-            permission_classes=(SyncPermission,)
-        )(request)
+        response = await MockView.as_view(permission_classes=(SyncPermission,))(request)
 
         self.assertEqual(response.status_code, 403)

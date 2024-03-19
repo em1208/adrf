@@ -34,7 +34,7 @@ class AsyncAuthentication(BaseAuthentication):
         if not auth.startswith(self.keyword):
             return None
 
-        token = auth[len(self.keyword):].strip()
+        token = auth[len(self.keyword) :].strip()
 
         if token != "admitme":
             raise AuthenticationFailed("Invalid token")
