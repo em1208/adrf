@@ -11,13 +11,11 @@ repos:
   - id: check-toml
   - id: end-of-file-fixer
   - id: trailing-whitespace
-- repo: https://github.com/pycqa/isort
-  rev: 5.12.0
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.3.3
   hooks:
-  - id: isort
-- repo: https://github.com/PyCQA/flake8
-  rev: 5.0.4
-  hooks:
-  - id: flake8
-    additional_dependencies:
-    - flake8-tidy-imports
+    # Run the linter.
+    - id: ruff
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
