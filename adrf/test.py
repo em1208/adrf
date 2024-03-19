@@ -44,11 +44,11 @@ class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
         """
 
         if data is None:
-            return ('', content_type)
+            return ("", content_type)
 
-        assert format is None or content_type is None, (
-            'You may not set both `format` and `content_type`.'
-        )
+        assert (
+            format is None or content_type is None
+        ), "You may not set both `format` and `content_type`."
 
         if content_type:
             # Content type specified explicitly, treat data as a raw bytestring
@@ -62,7 +62,7 @@ class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
                 "Set TEST_REQUEST_RENDERER_CLASSES to enable "
                 "extra request formats.".format(
                     format,
-                    ', '.join(["'" + fmt + "'" for fmt in self.renderer_classes])
+                    ", ".join(["'" + fmt + "'" for fmt in self.renderer_classes]),
                 )
             )
 
@@ -73,9 +73,7 @@ class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
             # Determine the content-type header from the renderer
             content_type = renderer.media_type
             if renderer.charset:
-                content_type = "{}; charset={}".format(
-                    content_type, renderer.charset
-                )
+                content_type = "{}; charset={}".format(content_type, renderer.charset)
 
             # Coerce text to bytes if required.
             if isinstance(ret, str):
@@ -85,45 +83,51 @@ class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
 
     def get(self, path, data=None, **extra):
         r = {
-            'QUERY_STRING': urlencode(data or {}, doseq=True),
+            "QUERY_STRING": urlencode(data or {}, doseq=True),
         }
-        if not data and '?' in path:
+        if not data and "?" in path:
             # Fix to support old behavior where you have the arguments in the
             # url. See #1461.
-            query_string = force_bytes(path.split('?')[1])
-            query_string = query_string.decode('iso-8859-1')
-            r['QUERY_STRING'] = query_string
+            query_string = force_bytes(path.split("?")[1])
+            query_string = query_string.decode("iso-8859-1")
+            r["QUERY_STRING"] = query_string
         r.update(extra)
-        return self.generic('GET', path, **r)
+        return self.generic("GET", path, **r)
 
     def post(self, path, data=None, format=None, content_type=None, **extra):
         data, content_type = self._encode_data(data, format, content_type)
-        return self.generic('POST', path, data, content_type, **extra)
+        return self.generic("POST", path, data, content_type, **extra)
 
     def put(self, path, data=None, format=None, content_type=None, **extra):
         data, content_type = self._encode_data(data, format, content_type)
-        return self.generic('PUT', path, data, content_type, **extra)
+        return self.generic("PUT", path, data, content_type, **extra)
 
     def patch(self, path, data=None, format=None, content_type=None, **extra):
         data, content_type = self._encode_data(data, format, content_type)
-        return self.generic('PATCH', path, data, content_type, **extra)
+        return self.generic("PATCH", path, data, content_type, **extra)
 
     def delete(self, path, data=None, format=None, content_type=None, **extra):
         data, content_type = self._encode_data(data, format, content_type)
-        return self.generic('DELETE', path, data, content_type, **extra)
+        return self.generic("DELETE", path, data, content_type, **extra)
 
     def options(self, path, data=None, format=None, content_type=None, **extra):
         data, content_type = self._encode_data(data, format, content_type)
-        return self.generic('OPTIONS', path, data, content_type, **extra)
+        return self.generic("OPTIONS", path, data, content_type, **extra)
 
-    def generic(self, method, path, data='',
-                content_type='application/octet-stream', secure=False, **extra):
+    def generic(
+        self,
+        method,
+        path,
+        data="",
+        content_type="application/octet-stream",
+        secure=False,
+        **extra,
+    ):
         # Include the CONTENT_TYPE, regardless of whether or not data is empty.
         if content_type is not None:
-            extra['CONTENT_TYPE'] = str(content_type)
+            extra["CONTENT_TYPE"] = str(content_type)
 
-        return super().generic(
-            method, path, data, content_type, secure, **extra)
+        return super().generic(method, path, data, content_type, secure, **extra)
 
     def request(self, **kwargs):
         request = super().request(**kwargs)
@@ -138,6 +142,7 @@ class AsyncAPIClient(DjangoAsyncClient, AsyncAPIRequestFactory):
 
     Does not currently support "follow" on its methods.
     """
+
     def __init__(self, enforce_csrf_checks=False, **defaults):
         super().__init__(**defaults)
         self.handler = AsyncForceAuthClientHandler(enforce_csrf_checks)
@@ -168,34 +173,34 @@ class AsyncAPIClient(DjangoAsyncClient, AsyncAPIRequestFactory):
         response = super().get(path, data=data, **extra)
         return response
 
-    def post(self, path, data=None, format=None, content_type=None,
-             **extra):
+    def post(self, path, data=None, format=None, content_type=None, **extra):
         response = super().post(
-            path, data=data, format=format, content_type=content_type, **extra)
+            path, data=data, format=format, content_type=content_type, **extra
+        )
         return response
 
-    def put(self, path, data=None, format=None, content_type=None,
-            **extra):
+    def put(self, path, data=None, format=None, content_type=None, **extra):
         response = super().put(
-            path, data=data, format=format, content_type=content_type, **extra)
+            path, data=data, format=format, content_type=content_type, **extra
+        )
         return response
 
-    def patch(self, path, data=None, format=None, content_type=None,
-              **extra):
+    def patch(self, path, data=None, format=None, content_type=None, **extra):
         response = super().patch(
-            path, data=data, format=format, content_type=content_type, **extra)
+            path, data=data, format=format, content_type=content_type, **extra
+        )
         return response
 
-    def delete(self, path, data=None, format=None, content_type=None,
-               **extra):
+    def delete(self, path, data=None, format=None, content_type=None, **extra):
         response = super().delete(
-            path, data=data, format=format, content_type=content_type, **extra)
+            path, data=data, format=format, content_type=content_type, **extra
+        )
         return response
 
-    def options(self, path, data=None, format=None, content_type=None,
-                **extra):
+    def options(self, path, data=None, format=None, content_type=None, **extra):
         response = super().options(
-            path, data=data, format=format, content_type=content_type, **extra)
+            path, data=data, format=format, content_type=content_type, **extra
+        )
         return response
 
     def logout(self):

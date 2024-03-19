@@ -45,7 +45,9 @@ class FactoryOnBasicViewTest(TestCase):
 
     def test_is_it_asgi(self):
         request = factory.request(path="/", method="GET")
-        assert isinstance(request, ASGIRequest), f'Type of request is "{type(request).__name__}"'
+        assert isinstance(
+            request, ASGIRequest
+        ), f'Type of request is "{type(request).__name__}"'
 
     def test_get_succeeds(self):
         request = factory.get("/")
