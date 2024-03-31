@@ -158,6 +158,65 @@ class APIView(DRFAPIView):
                     code=getattr(permission, "code", None),
                 )
 
+    def check_object_permissions(self, request: Request, obj) -> None:
+        permissions = self.get_permissions()
+
+        if not permissions:
+            return
+
+        sync_permissions, async_permissions = [], []
+
+        for permission in permissions:
+            if asyncio.iscoroutinefunction(permission.has_object_permission):
+                async_permissions.append(permission)
+            else:
+                sync_permissions.append(permission)
+
+        if async_permissions:
+            async_to_sync(self.check_async_object_permissions)(request, async_permissions, obj)
+
+        if sync_permissions:
+            self.check_sync_object_permissions(request, sync_permissions, obj)
+
+    async def check_async_object_permissions(
+        self, request: AsyncRequest, permissions: List[BasePermission], obj
+    ) -> None:
+        """
+        Check if the request should be permitted asynchronously.
+        Raises an appropriate exception if the request is not permitted.
+        """
+
+        has_object_permissions = await asyncio.gather(
+            *[permission.has_object_permission(request, self, obj) for permission in permissions],
+            return_exceptions=True,
+        )
+
+        for has_object_permission in has_object_permissions:
+            if isinstance(has_object_permission, Exception):
+                raise has_object_permission
+            elif not has_object_permission:
+                self.permission_denied(
+                    request,
+                    message=getattr(has_object_permission, "detail", None),
+                    code=getattr(has_object_permission, "code", None),
+                )
+
+    def check_sync_object_permissions(
+        self, request: Request, permissions: List[BasePermission], obj
+    ) -> None:
+        """
+        Check if the request should be permitted synchronously.
+        Raises an appropriate exception if the request is not permitted.
+        """
+
+        for permission in permissions:
+            if not permission.has_object_permission(request, self, obj):
+                self.permission_denied(
+                    request,
+                    message=getattr(permission, "detail", None),
+                    code=getattr(permission, "code", None),
+                )
+
     def check_throttles(self, request: Request) -> None:
         """
         Check if the request should be throttled.
