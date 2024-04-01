@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from django.http import HttpResponse
 from django.test import TestCase, override_settings
 
@@ -32,7 +33,8 @@ class ObjectPermissionTestView(APIView):
     permission_classes = (AsyncObjectPermission,)
 
     async def get(self, request):
-        self.check_object_permissions(request, request.path)
+        await sync_to_async(self.check_object_permissions)(
+            request, request.path)
         return HttpResponse('ok')
 
 
@@ -58,13 +60,17 @@ class TestSyncObjectPermission(TestCase):
     async def test_sync_object_permission(self):
         request = factory.get("/sync/allow")
 
-        response = await ObjectPermissionTestView.as_view(permission_classes=(SyncObjectPermission,))(request)
+        response = await ObjectPermissionTestView.as_view(
+            permission_classes=(SyncObjectPermission,)
+        )(request)
 
         self.assertEqual(response.status_code, 200)
 
     async def test_sync_object_permission_reject(self):
         request = factory.get("/sync/reject")
 
-        response = await ObjectPermissionTestView.as_view(permission_classes=(SyncObjectPermission,))(request)
+        response = await ObjectPermissionTestView.as_view(
+            permission_classes=(SyncObjectPermission,)
+        )(request)
 
         self.assertEqual(response.status_code, 403)
