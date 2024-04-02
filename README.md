@@ -42,14 +42,20 @@ class AsyncAuthentication(BaseAuthentication):
         return user, None
 
 class AsyncPermission:
-    def has_permission(self, request, view) -> bool:
+    async def has_permission(self, request, view) -> bool:
         if random.random() < 0.7:
             return False
 
         return True
 
+    async def has_object_permission(self, request, view, obj):
+        if obj.user == request.user or request.user.is_superuser:
+            return True
+
+        return False
+
 class AsyncThrottle(BaseThrottle):
-    def allow_request(self, request, view) -> bool:
+    async def allow_request(self, request, view) -> bool:
         if random.random() < 0.7:
             return False
 
