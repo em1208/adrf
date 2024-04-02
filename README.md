@@ -47,11 +47,11 @@ class AsyncPermission:
             return False
 
         return True
-    
+
     async def has_object_permission(self, request, view, obj):
         if obj.user == request.user or request.user.is_superuser:
             return True
-        
+
         return False
 
 class AsyncThrottle(BaseThrottle):

@@ -174,7 +174,8 @@ class APIView(DRFAPIView):
 
         if async_permissions:
             async_to_sync(self.check_async_object_permissions)(
-                request, async_permissions, obj)
+                request, async_permissions, obj
+            )
 
         if sync_permissions:
             self.check_sync_object_permissions(request, sync_permissions, obj)
@@ -188,9 +189,10 @@ class APIView(DRFAPIView):
         """
 
         has_object_permissions = await asyncio.gather(
-            *[permission.has_object_permission(request, self, obj)
-              for permission in permissions
-              ],
+            *[
+                permission.has_object_permission(request, self, obj)
+                for permission in permissions
+            ],
             return_exceptions=True,
         )
 
