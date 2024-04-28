@@ -1,8 +1,8 @@
 import asyncio
+import inspect
 from functools import update_wrapper
 
 from django.utils.decorators import classonlymethod
-from django.utils.functional import classproperty
 
 from adrf.views import APIView
 from rest_framework.viewsets import ViewSetMixin as DRFViewSetMixin
@@ -119,7 +119,7 @@ class ViewSetMixin(DRFViewSetMixin):
             # or continue as usual
             return await self.dispatch(request, *args, **kwargs)
 
-        view = async_view if cls.view_is_async else view
+        view = async_view if _view_is_async(cls) else view
 
         # take name and docstring from class
         update_wrapper(view, cls, updated=())
@@ -139,14 +139,16 @@ class ViewSetMixin(DRFViewSetMixin):
 
 
 class ViewSet(ViewSetMixin, APIView):
-    @classproperty
-    def view_is_async(cls):
-        """
-        Checks whether any viewset methods are coroutines.
-        """
-        result = [
-            asyncio.iscoroutinefunction(function)
-            for name, function in cls.__dict__.items()
-            if callable(function) and not name.startswith("__")
-        ]
-        return any(result)
+    pass
+
+
+def _view_is_async(cls):
+    """
+    Checks whether any viewset methods are coroutines.
+    """
+    result = [
+        asyncio.iscoroutinefunction(function)
+        for name, function in inspect.getmembers(cls)
+        if callable(function) and not name.startswith("__")
+    ]
+    return any(result)

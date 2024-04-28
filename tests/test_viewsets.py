@@ -27,6 +27,15 @@ class AsyncViewSet(ViewSet):
         return Response({"method": "POST", "data": request.data})
 
 
+class Mixin:
+    async def list(self, request):
+        return Response({"method": "inherited GET"})
+
+
+class InheritedAsyncViewSet(Mixin, ViewSet):
+    pass
+
+
 class ViewSetIntegrationTests(TestCase):
     def setUp(self):
         self.list = BasicViewSet.as_view({"get": "list"})
@@ -107,3 +116,14 @@ class AsyncViewSetIntegrationTests(TestCase):
         expected = {"detail": JSON_ERROR}
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert sanitise_json_error(response.data) == expected
+
+
+class InheritedAsyncViewSetIntegrationTests(TestCase):
+    def setUp(self):
+        self.list = InheritedAsyncViewSet.as_view({"get": "list"})
+
+    def test_view_is_async_dispatched(self):
+        request = factory.get("/")
+        response = async_to_sync(self.list)(request)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {"method": "inherited GET"}

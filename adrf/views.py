@@ -2,6 +2,8 @@ import asyncio
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync, sync_to_async
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.functional import classproperty
 
 from adrf.requests import AsyncRequest
 from rest_framework.permissions import BasePermission
@@ -289,3 +291,25 @@ class APIView(DRFAPIView):
                 throttle_durations.append(throttle.wait())
 
         return throttle_durations
+
+    @classproperty
+    def view_is_async(cls):
+        handlers = [
+            getattr(cls, method)
+            for method in cls.http_method_names
+            if (method != "options" and hasattr(cls, method))
+        ]
+        if not handlers:
+            actions = ["retrieve", "create", "update", "partial_update", "destroy"]
+            handlers = [
+                getattr(cls, action) for action in actions if hasattr(cls, action)
+            ]
+        if not handlers:
+            return False
+        is_async = asyncio.iscoroutinefunction(handlers[0])
+        if not all(asyncio.iscoroutinefunction(h) == is_async for h in handlers[1:]):
+            raise ImproperlyConfigured(
+                f"{cls.__qualname__} HTTP handlers must either be all sync or all "
+                "async."
+            )
+        return is_async
