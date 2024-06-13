@@ -166,7 +166,8 @@ class GenericViewSet(ViewSet):
     Base class for all other generic views.
     """
     _ASYNC_NON_DISPATCH_METHODS = ViewSet._ASYNC_NON_DISPATCH_METHODS \
-                                + ['aget_object', 'perform_create', 'apaginate_queryset']
+                                + ['aget_object', 'perform_create', 'apaginate_queryset', 
+                                   'perform_update']
     
     queryset = None
     serializer_class = None
@@ -408,3 +409,43 @@ class ListModelMixin:
         serializer = self.get_serializer(queryset, many=True)
         data = await serializer.adata if hasattr(serializer, 'adata') else serializer.data
         return Response(data, status=status.HTTP_200_OK)
+
+
+class UpdateModelMixin:
+    """
+    Update a model instance.
+    """
+    async def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = await self.aget_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.adata
+        await self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(await data, status=status.HTTP_200_OK)
+
+    async def perform_update(self, serializer):
+        await serializer.asave()
+
+    async def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return await self.update(request, *args, **kwargs)
+
+
+class DestroyModelMixin:
+    """
+    Destroy a model instance.
+    """
+    async def destroy(self, request, *args, **kwargs):
+        instance = await self.aget_object()
+        await self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    async def perform_destroy(self, instance):
+        await instance.adelete()
