@@ -12,6 +12,7 @@ from adrf.shortcuts import aget_object_or_404
 from rest_framework.viewsets import ViewSetMixin as DRFViewSetMixin
 from rest_framework.settings import api_settings
 from rest_framework.response import Response
+from rest_framework import status
 
 
 class ViewSetMixin(DRFViewSetMixin):
@@ -165,7 +166,7 @@ class GenericViewSet(ViewSet):
     Base class for all other generic views.
     """
     _ASYNC_NON_DISPATCH_METHODS = ViewSet._ASYNC_NON_DISPATCH_METHODS \
-                                + ['aget_object']
+                                + ['aget_object', 'perform_create', 'apaginate_queryset']
     
     queryset = None
     serializer_class = None
@@ -358,3 +359,52 @@ class GenericViewSet(ViewSet):
         if asyncio.iscoroutinefunction(self.paginator.get_paginated_response):
             return async_to_sync(self.paginator.get_paginated_response(data))
         return self.paginator.get_paginated_response(data)
+
+class CreateModelMixin:
+    """
+    Create a model instance.
+    """
+    async def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        await self.perform_create(serializer)
+        data = await serializer.adata
+        headers = self.get_success_headers(data)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+    async def perform_create(self, serializer):
+        await serializer.asave()
+
+    def get_success_headers(self, data):
+        try:
+            return {'Location': str(data[api_settings.URL_FIELD_NAME])}
+        except (TypeError, KeyError):
+            return {}
+
+class RetrieveModelMixin:
+    """
+    Retrieve a model instance.
+    """
+    async def retrieve(self, request, *args, **kwargs):
+        instance = await self.aget_object()
+        serializer = self.get_serializer(instance, many=False)
+        #try to serialize async is the serializer supports it. Sync otherwise
+        data = await serializer.adata if hasattr(serializer, 'adata') else serializer.data
+        return Response(data, status=status.HTTP_200_OK)
+        
+class ListModelMixin:
+    """
+    List a queryset.
+    """
+    async def list(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = await self.apaginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = await serializer.adata if hasattr(serializer, 'adata') else serializer.data
+            return await self.aget_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = await serializer.adata if hasattr(serializer, 'adata') else serializer.data
+        return Response(data, status=status.HTTP_200_OK)
