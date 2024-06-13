@@ -449,3 +449,23 @@ class DestroyModelMixin:
 
     async def perform_destroy(self, instance):
         await instance.adelete()
+
+class ReadOnlyModelViewSet(RetrieveModelMixin,
+                           ListModelMixin,
+                           GenericViewSet):
+    """
+    A viewset that provides default asynchronous `list()` and `retrieve()` actions.
+    """
+    pass
+
+class ModelViewSet(CreateModelMixin,
+                   ListModelMixin,
+                   RetrieveModelMixin,
+                   UpdateModelMixin,
+                   DestroyModelMixin,
+                   GenericViewSet):
+    """
+    A viewset that provides default asynchronous `create()`, `retrieve()`, `update()`,
+    `partial_update()`, `destroy()` and `list()` actions.
+    """
+    pass
