@@ -15,6 +15,15 @@ from rest_framework.serializers import model_meta, raise_errors_on_nested_writes
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 
 
+# NOTE This is the list of fields defined by DRF for which we need to call to_rapresentation.
+DRF_FIELDS = list(DRFModelSerializer.serializer_field_mapping.values()) + [
+    DRFModelSerializer.serializer_related_field,
+    DRFModelSerializer.serializer_related_to_field,
+    DRFModelSerializer.serializer_url_field,
+    DRFModelSerializer.serializer_choice_field,
+]
+
+
 class BaseSerializer(DRFBaseSerializer):
     """
     Base serializer class.
@@ -148,17 +157,13 @@ class Serializer(BaseSerializer, _Serializer, DRFSerializer):
             except SkipField:
                 continue
 
-            is_drf_field = type(field) in list(
-                DRFModelSerializer.serializer_field_mapping.values()
-            ) + [DRFModelSerializer.serializer_choice_field]
-
             check_for_none = (
                 attribute.pk if isinstance(attribute, models.Model) else attribute
             )
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                if is_drf_field:
+                if type(field) in DRF_FIELDS:
                     repr = field.to_representation(attribute)
                 else:
                     repr = await field.ato_representation(attribute)
