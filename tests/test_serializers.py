@@ -1,12 +1,12 @@
 from collections import ChainMap
 
 from asgiref.sync import sync_to_async
-from django.contrib.auth.models import User
 from django.test import TestCase
 
 from adrf.serializers import ModelSerializer, Serializer
 from rest_framework import serializers
 from rest_framework.test import APIRequestFactory
+from .test_models import User, Order
 
 factory = APIRequestFactory()
 
@@ -20,7 +20,6 @@ class MockObject:
             setattr(self, key, val)
 
 
-# replace with django test case
 class TestSerializer(TestCase):
     def setUp(self):
         class SimpleSerializer(Serializer):
@@ -39,14 +38,8 @@ class TestSerializer(TestCase):
             async def aupdate(self, instance, validated_data):
                 return MockObject(**validated_data)
 
-        class MyModelSerializer(ModelSerializer):
-            class Meta:
-                model = User
-                fields = ("username",)
-
         self.simple_serializer = SimpleSerializer
         self.crud_serializer = CrudSerializer
-        self.model_serializer = MyModelSerializer
 
         self.default_data = {
             "username": "test",
@@ -63,15 +56,6 @@ class TestSerializer(TestCase):
         }
         serializer = self.simple_serializer(data=data)
         assert serializer.is_valid()
-        assert await serializer.adata == data
-        assert serializer.errors == {}
-
-    async def test_modelserializer_valid(self):
-        data = {
-            "username": "test",
-        }
-        serializer = self.model_serializer(data=data)
-        assert await sync_to_async(serializer.is_valid)()
         assert await serializer.adata == data
         assert serializer.errors == {}
 
@@ -235,4 +219,37 @@ class TestSerializer(TestCase):
         serializer = self.simple_serializer(data=data)
         assert serializer.is_valid()
         assert serializer.data == data
+        assert serializer.errors == {}
+
+
+class TestModelSerializer(TestCase):
+    def setUp(self) -> None:
+        class UserSerializer(ModelSerializer):
+            class Meta:
+                model = User
+                fields = ("username",)
+
+        class OrderSerializer(ModelSerializer):
+            class Meta:
+                model = Order
+                fields = ("id", "user", "name")
+
+        self.user_serializer = UserSerializer
+        self.order_serializer = OrderSerializer
+
+    async def test_user_serializer_valid(self):
+        data = {
+            "username": "test",
+        }
+        serializer = self.user_serializer(data=data)
+        assert await sync_to_async(serializer.is_valid)()
+        assert await serializer.adata == data
+        assert serializer.errors == {}
+
+    async def test_order_serializer_valid(self):
+        user = await User.objects.acreate(username="test")
+        data = {"user": user.id, "name": "Test order"}
+        serializer = self.order_serializer(data=data)
+        assert await sync_to_async(serializer.is_valid)()
+        assert await serializer.adata == data
         assert serializer.errors == {}
