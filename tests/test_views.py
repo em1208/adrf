@@ -3,12 +3,12 @@ import copy
 from asgiref.sync import async_to_sync
 from django.contrib.auth.models import User
 from django.test import TestCase
-
-from adrf.decorators import api_view
-from adrf.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
+
+from adrf.decorators import api_view
+from adrf.views import APIView
 
 factory = APIRequestFactory()
 
