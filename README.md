@@ -139,7 +139,7 @@ class AsyncSerializer(Serializer):
 views.py
 
 ```python
-from . import serializers
+from .serializers import AsyncSerializer
 from adrf.views import APIView
 
 class AsyncView(APIView):
@@ -149,7 +149,42 @@ class AsyncView(APIView):
             "password": "test",
             "age": 10,
         }
-        serializer = serializers.AsyncSerializer(data=data)
+        serializer = AsyncSerializer(data=data)
         serializer.is_valid()
         return await serializer.adata
+```
+
+# Async generics
+
+models.py
+
+```python
+from django.db import models
+
+class Order(models.Model):
+    name = models.TextField()
+```
+
+serializers.py
+
+```python
+from adrf.serializers import ModelSerializer
+from .models import Order
+
+class OrderSerializer(ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ('name', )
+```
+
+views.py
+
+```python
+from adrf.generics import ListCreateAPIView
+from .models import Order
+from .serializers import OrderSerializer
+
+class ListCreateOrderView(ListCreateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
 ```
