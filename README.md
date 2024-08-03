@@ -154,7 +154,7 @@ class AsyncView(APIView):
         return await serializer.adata
 ```
 
-# Async generics
+# Async Generics
 
 models.py
 

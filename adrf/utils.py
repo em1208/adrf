@@ -1,7 +1,7 @@
 import inspect
 
 
-# NOTE This function has been taken from the python library and modified
+# NOTE This function was taken from the python library and modified
 # to allow an exclusion list and avoid recursion errors.
 def getmembers(object, predicate, exclude_names=[]):
     results = []

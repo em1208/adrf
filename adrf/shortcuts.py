@@ -4,7 +4,7 @@ from django.shortcuts import _get_queryset
 try:
     from django.shortcuts import aget_object_or_404
 except ImportError:
-    # NOTE aget_object_or_404 defined since Django 5.
+    # NOTE aget_object_or_404 is defined since Django 5.
     # This function will be removed when support for Django 4 is dropped.
     async def aget_object_or_404(klass, *args, **kwargs):
         """See get_object_or_404()."""
