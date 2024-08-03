@@ -1,9 +1,9 @@
 from django.http import HttpResponse
 from django.test import TestCase, override_settings
-
-from adrf.views import APIView
 from rest_framework.permissions import BasePermission
 from rest_framework.test import APIRequestFactory
+
+from adrf.views import APIView
 
 factory = APIRequestFactory()
 

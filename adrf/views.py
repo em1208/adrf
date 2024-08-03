@@ -2,12 +2,12 @@ import asyncio
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync, sync_to_async
-
-from adrf.requests import AsyncRequest
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from rest_framework.throttling import BaseThrottle
 from rest_framework.views import APIView as DRFAPIView
+
+from adrf.requests import AsyncRequest
 
 
 class APIView(DRFAPIView):

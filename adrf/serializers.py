@@ -3,17 +3,17 @@ from collections import OrderedDict
 
 from async_property import async_property
 from django.db import models
-
 from rest_framework.fields import SkipField
-from rest_framework.serializers import LIST_SERIALIZER_KWARGS
+from rest_framework.serializers import (
+    LIST_SERIALIZER_KWARGS,
+    model_meta,
+    raise_errors_on_nested_writes,
+)
 from rest_framework.serializers import BaseSerializer as DRFBaseSerializer
 from rest_framework.serializers import ListSerializer as DRFListSerializer
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
 from rest_framework.serializers import Serializer as DRFSerializer
-from rest_framework.serializers import SerializerMetaclass as DRFSerializerMetaclass
-from rest_framework.serializers import model_meta, raise_errors_on_nested_writes
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
-
 
 # NOTE This is the list of fields defined by DRF for which we need to call to_rapresentation.
 DRF_FIELDS = list(DRFModelSerializer.serializer_field_mapping.values()) + [
@@ -128,11 +128,7 @@ class BaseSerializer(DRFBaseSerializer):
         return self.instance
 
 
-class _Serializer(metaclass=DRFSerializerMetaclass):
-    pass
-
-
-class Serializer(BaseSerializer, _Serializer, DRFSerializer):
+class Serializer(BaseSerializer, DRFSerializer):
     @async_property
     async def adata(self):
         """

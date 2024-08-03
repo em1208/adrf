@@ -1,11 +1,12 @@
 from asgiref.sync import async_to_sync
 from django.contrib.auth.models import User
 from django.test import TestCase
-
-from adrf.viewsets import ViewSet
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
+
+from adrf.serializers import ModelSerializer
+from adrf.viewsets import ModelViewSet, ViewSet
 from tests.test_views import JSON_ERROR, sanitise_json_error
 
 factory = APIRequestFactory()
@@ -107,3 +108,56 @@ class AsyncViewSetIntegrationTests(TestCase):
         expected = {"detail": JSON_ERROR}
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert sanitise_json_error(response.data) == expected
+
+
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("username",)
+
+
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class ModelViewSetIntegrationTests(TestCase):
+    def setUp(self):
+        self.list_create = UserViewSet.as_view({"get": "alist", "post": "acreate"})
+        self.retrieve_update = UserViewSet.as_view(
+            {"get": "aretrieve", "put": "aupdate"}
+        )
+        self.destroy = UserViewSet.as_view({"delete": "adestroy"})
+
+    def test_list_succeeds(self):
+        User.objects.create(username="test")
+        request = factory.get("/")
+        response = async_to_sync(self.list_create)(request)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == [{"username": "test"}]
+
+    def test_create_succeeds(self):
+        request = factory.post("/", data={"username": "test"})
+        response = async_to_sync(self.list_create)(request)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data == {"username": "test"}
+
+    def test_retrieve_succeeds(self):
+        user = User.objects.create(username="test")
+        request = factory.get("/")
+        response = async_to_sync(self.retrieve_update)(request, pk=user.id)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {"username": "test"}
+
+    def test_update_succeeds(self):
+        user = User.objects.create(username="test")
+        request = factory.put("/", data={"username": "not-test"})
+        response = async_to_sync(self.retrieve_update)(request, pk=user.id)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {"username": "not-test"}
+
+    def test_destroy_succeeds(self):
+        user = User.objects.create(username="test")
+        request = factory.delete("/")
+        response = async_to_sync(self.destroy)(request, pk=user.id)
+        assert response.status_code == status.HTTP_204_NO_CONTENT

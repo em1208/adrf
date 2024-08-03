@@ -1,11 +1,15 @@
 import asyncio
+import inspect
 from functools import update_wrapper
 
 from django.utils.decorators import classonlymethod
 from django.utils.functional import classproperty
-
-from adrf.views import APIView
 from rest_framework.viewsets import ViewSetMixin as DRFViewSetMixin
+
+from adrf import mixins
+from adrf.generics import GenericAPIView
+from adrf.utils import getmembers
+from adrf.views import APIView
 
 
 class ViewSetMixin(DRFViewSetMixin):
@@ -139,6 +143,13 @@ class ViewSetMixin(DRFViewSetMixin):
 
 
 class ViewSet(ViewSetMixin, APIView):
+    _ASYNC_NON_DISPATCH_METHODS = [
+        "check_async_object_permissions",
+        "async_dispatch",
+        "check_async_permissions",
+        "check_async_throttles",
+    ]
+
     @classproperty
     def view_is_async(cls):
         """
@@ -146,7 +157,43 @@ class ViewSet(ViewSetMixin, APIView):
         """
         result = [
             asyncio.iscoroutinefunction(function)
-            for name, function in cls.__dict__.items()
-            if callable(function) and not name.startswith("__")
+            for name, function in getmembers(
+                cls, inspect.iscoroutinefunction, exclude_names=["view_is_async"]
+            )
+            if not name.startswith("__") and name not in cls._ASYNC_NON_DISPATCH_METHODS
         ]
         return any(result)
+
+
+class GenericViewSet(ViewSet, GenericAPIView):
+    _ASYNC_NON_DISPATCH_METHODS = ViewSet._ASYNC_NON_DISPATCH_METHODS + [
+        "aget_object",
+        "apaginate_queryset",
+        "get_apaginated_response",
+    ]
+
+
+class ReadOnlyModelViewSet(
+    mixins.RetrieveModelMixin, mixins.ListModelMixin, GenericViewSet
+):
+    """
+    A viewset that provides default asynchronous `list()` and `retrieve()` actions.
+    """
+
+    pass
+
+
+class ModelViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    GenericViewSet,
+):
+    """
+    A viewset that provides default asynchronous `create()`, `retrieve()`, `update()`,
+    `partial_update()`, `destroy()` and `list()` actions.
+    """
+
+    pass

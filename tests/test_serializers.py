@@ -2,11 +2,12 @@ from collections import ChainMap
 
 from asgiref.sync import sync_to_async
 from django.test import TestCase
-
-from adrf.serializers import ModelSerializer, Serializer
 from rest_framework import serializers
 from rest_framework.test import APIRequestFactory
-from .test_models import User, Order
+
+from adrf.serializers import ModelSerializer, Serializer
+
+from .models import Order, User
 
 factory = APIRequestFactory()
 

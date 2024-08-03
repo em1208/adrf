@@ -1,11 +1,11 @@
 from django.core.handlers.asgi import ASGIRequest
 from django.test import TestCase, override_settings
 from django.urls import path, reverse
+from rest_framework import status
+from rest_framework.response import Response
 
 from adrf.decorators import api_view
 from adrf.test import AsyncAPIClient, AsyncAPIRequestFactory
-from rest_framework import status
-from rest_framework.response import Response
 
 
 @api_view(["GET", "POST", "PUT", "PATCH"])
