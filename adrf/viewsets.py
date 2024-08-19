@@ -20,9 +20,9 @@ class ViewSetMixin(DRFViewSetMixin):
     the binding of HTTP methods to actions on the Resource.
 
     For example, to create a concrete view binding the 'GET' and 'POST' methods
-    to the 'list' and 'create' actions...
+    to the 'alist' and 'acreate' actions...
 
-    view = MyViewSet.as_view({'get': 'list', 'post': 'create'})
+    view = MyViewSet.as_view({'get': 'alist', 'post': 'acreate'})
     """
 
     @classonlymethod
@@ -155,14 +155,13 @@ class ViewSet(ViewSetMixin, APIView):
         """
         Checks whether any viewset methods are coroutines.
         """
-        result = [
+        return any(
             asyncio.iscoroutinefunction(function)
             for name, function in getmembers(
                 cls, inspect.iscoroutinefunction, exclude_names=["view_is_async"]
             )
             if not name.startswith("__") and name not in cls._ASYNC_NON_DISPATCH_METHODS
-        ]
-        return any(result)
+        )
 
 
 class GenericViewSet(ViewSet, GenericAPIView):
