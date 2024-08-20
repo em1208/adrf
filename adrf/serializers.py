@@ -1,3 +1,4 @@
+import asyncio
 import traceback
 from collections import OrderedDict
 
@@ -14,14 +15,6 @@ from rest_framework.serializers import ListSerializer as DRFListSerializer
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
 from rest_framework.serializers import Serializer as DRFSerializer
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
-
-# NOTE This is the list of fields defined by DRF for which we need to call to_rapresentation.
-DRF_FIELDS = list(DRFModelSerializer.serializer_field_mapping.values()) + [
-    DRFModelSerializer.serializer_related_field,
-    DRFModelSerializer.serializer_related_to_field,
-    DRFModelSerializer.serializer_url_field,
-    DRFModelSerializer.serializer_choice_field,
-]
 
 
 class BaseSerializer(DRFBaseSerializer):
@@ -159,10 +152,10 @@ class Serializer(BaseSerializer, DRFSerializer):
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                if type(field) in DRF_FIELDS:
-                    repr = field.to_representation(attribute)
-                else:
+                if asyncio.iscoroutinefunction(getattr(field, "ato_representation", None)):
                     repr = await field.ato_representation(attribute)
+                else:
+                    repr = field.to_representation(attribute)
 
                 ret[field.field_name] = repr
 
