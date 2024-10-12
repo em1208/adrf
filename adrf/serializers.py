@@ -272,7 +272,7 @@ class ModelSerializer(Serializer, DRFModelSerializer):
         if many_to_many:
             for field_name, value in many_to_many.items():
                 field = getattr(instance, field_name)
-                field.set(value)
+                await field.aset(value)
 
         return instance
 
@@ -298,6 +298,6 @@ class ModelSerializer(Serializer, DRFModelSerializer):
         # updated instance and we do not want it to collide with .update()
         for attr, value in m2m_fields:
             field = getattr(instance, attr)
-            field.set(value)
+            await field.aset(value)
 
         return instance
