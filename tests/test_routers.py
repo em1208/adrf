@@ -1,15 +1,9 @@
-from asgiref.sync import async_to_sync
-from django.contrib.auth.models import User
 from django.test import Client, TestCase, override_settings
-from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.test import APIRequestFactory
 from rest_framework.viewsets import ModelViewSet as DRFModelViewSet
 
-from adrf.routers import SimpleRouter, DefaultRouter
-from adrf.serializers import ModelSerializer
+from adrf.routers import SimpleRouter
 from adrf.viewsets import ModelViewSet as AsyncModelViewSet
-from tests.test_views import JSON_ERROR, sanitise_json_error
 
 
 class SyncViewSet(DRFModelViewSet):

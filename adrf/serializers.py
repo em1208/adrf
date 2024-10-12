@@ -152,7 +152,9 @@ class Serializer(BaseSerializer, DRFSerializer):
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                if asyncio.iscoroutinefunction(getattr(field, "ato_representation", None)):
+                if asyncio.iscoroutinefunction(
+                    getattr(field, "ato_representation", None)
+                ):
                     repr = await field.ato_representation(attribute)
                 else:
                     repr = field.to_representation(attribute)
