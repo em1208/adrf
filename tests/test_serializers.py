@@ -5,6 +5,7 @@ from django.test import TestCase
 from rest_framework import serializers
 from rest_framework.test import APIRequestFactory
 
+from adrf.fields import SerializerMethodField
 from adrf.serializers import ModelSerializer, Serializer
 
 from .models import Order, User
@@ -253,4 +254,40 @@ class TestModelSerializer(TestCase):
         serializer = self.order_serializer(data=data)
         assert await sync_to_async(serializer.is_valid)()
         assert await serializer.adata == data
+        assert serializer.errors == {}
+
+
+class TestSerializerWithSerializerMethodField(TestCase):
+    def test_sync_serializer_valid(self):
+        class SimpleSerializer(Serializer):
+            username = serializers.CharField()
+            age = SerializerMethodField()
+
+            def get_age(self, obj):
+                return 1900
+
+        data = {
+            "username": "test",
+        }
+        data_with_age = {"age": 1900, **data}
+        serializer = SimpleSerializer(data=data)
+        assert serializer.is_valid()
+        assert serializer.data == data_with_age
+        assert serializer.errors == {}
+
+    async def test_async_serializer_valid(self):
+        class SimpleAsyncSerializer(Serializer):
+            username = serializers.CharField()
+            age = SerializerMethodField()
+
+            async def get_age(self, obj):
+                return 1900
+
+        data = {
+            "username": "test",
+        }
+        data_with_age = {"age": 1900, **data}
+        serializer = SimpleAsyncSerializer(data=data)
+        assert serializer.is_valid()
+        assert await serializer.adata == data_with_age
         assert serializer.errors == {}
