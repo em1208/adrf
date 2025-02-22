@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ForeignKey
 from django.db.models import Model
+from rest_framework.fields import is_simple_callable
 
 
 # NOTE This function was taken from the python library and modified
@@ -128,15 +129,15 @@ async def aget_attribute(instance, attrs):
             return None
 
         # Если атрибут является callable-объектом, вызываем его
-        if callable(instance):
-            try:
-                if is_async_callable(instance):
-                    instance = await instance()
-                else:
-                    instance = instance()
-            except (AttributeError, KeyError) as exc:
-                # Если вызов callable вызвал исключение, поднимаем ValueError
-                raise ValueError(f'Exception raised in callable attribute "{attr}"; original exception was: {exc}')
+        
+        try:
+            if is_async_callable(instance):
+                instance = await instance()
+            elif is_simple_callable(instance):
+                instance = instance()
+        except (AttributeError, KeyError) as exc:
+            # Если вызов callable вызвал исключение, поднимаем ValueError
+            raise ValueError(f'Exception raised in callable attribute "{attr}"; original exception was: {exc}')
 
     return instance
 
