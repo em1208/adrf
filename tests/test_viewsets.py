@@ -6,8 +6,10 @@ from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
 
 from adrf.serializers import ModelSerializer
-from adrf.viewsets import ModelViewSet, ViewSet
-from tests.test_views import JSON_ERROR, sanitise_json_error
+from adrf.viewsets import ModelViewSet
+from adrf.viewsets import ViewSet
+from tests.test_views import JSON_ERROR
+from tests.test_views import sanitise_json_error
 
 factory = APIRequestFactory()
 
@@ -124,9 +126,7 @@ class UserViewSet(ModelViewSet):
 class ModelViewSetIntegrationTests(TestCase):
     def setUp(self):
         self.list_create = UserViewSet.as_view({"get": "alist", "post": "acreate"})
-        self.retrieve_update = UserViewSet.as_view(
-            {"get": "aretrieve", "put": "aupdate"}
-        )
+        self.retrieve_update = UserViewSet.as_view({"get": "aretrieve", "put": "aupdate"})
         self.destroy = UserViewSet.as_view({"delete": "adestroy"})
 
     def test_list_succeeds(self):

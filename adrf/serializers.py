@@ -4,20 +4,48 @@ from collections import OrderedDict
 
 from async_property import async_property
 from django.db import models
+from rest_framework.compat import postgres_fields
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SkipField
-from rest_framework.serializers import (
-    LIST_SERIALIZER_KWARGS,
-    model_meta,
-    raise_errors_on_nested_writes,
-)
 from rest_framework.serializers import BaseSerializer as DRFBaseSerializer
+from rest_framework.serializers import LIST_SERIALIZER_KWARGS
 from rest_framework.serializers import ListSerializer as DRFListSerializer
+from rest_framework.serializers import model_meta
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
+from rest_framework.serializers import raise_errors_on_nested_writes
 from rest_framework.serializers import Serializer as DRFSerializer
-from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
+from rest_framework.utils.serializer_helpers import ReturnDict
+from rest_framework.utils.serializer_helpers import ReturnList
+
+from adrf.fields import AsyncField
+from adrf.fields import BooleanField
+from adrf.fields import CharField
+from adrf.fields import ChoiceField
+from adrf.fields import DateField
+from adrf.fields import DateTimeField
+from adrf.fields import DecimalField
+from adrf.fields import DurationField
+from adrf.fields import EmailField
+from adrf.fields import FileField
+from adrf.fields import FilePathField
+from adrf.fields import FloatField
+from adrf.fields import HStoreField
+from adrf.fields import ImageField
+from adrf.fields import IntegerField
+from adrf.fields import IPAddressField
+from adrf.fields import JSONField
+from adrf.fields import ListField
+from adrf.fields import ModelField
+from adrf.fields import SlugField
+from adrf.fields import TimeField
+from adrf.fields import URLField
+from adrf.fields import UUIDField
+from adrf.relations import HyperlinkedIdentityField
+from adrf.relations import PrimaryKeyRelatedField
+from adrf.relations import SlugRelatedField
 
 
-class BaseSerializer(DRFBaseSerializer):
+class BaseSerializer(DRFBaseSerializer, AsyncField):
     """
     Base serializer class.
     """
@@ -37,13 +65,7 @@ class BaseSerializer(DRFBaseSerializer):
             list_kwargs["max_length"] = max_length
         if min_length is not None:
             list_kwargs["min_length"] = min_length
-        list_kwargs.update(
-            {
-                key: value
-                for key, value in kwargs.items()
-                if key in LIST_SERIALIZER_KWARGS
-            }
-        )
+        list_kwargs.update({key: value for key, value in kwargs.items() if key in LIST_SERIALIZER_KWARGS})
         meta = getattr(cls, "Meta", None)
         list_serializer_class = getattr(meta, "list_serializer_class", ListSerializer)
         return list_serializer_class(*args, **list_kwargs)
@@ -63,9 +85,7 @@ class BaseSerializer(DRFBaseSerializer):
         if not hasattr(self, "_data"):
             if self.instance is not None and not getattr(self, "_errors", None):
                 self._data = await self.ato_representation(self.instance)
-            elif hasattr(self, "_validated_data") and not getattr(
-                self, "_errors", None
-            ):
+            elif hasattr(self, "_validated_data") and not getattr(self, "_errors", None):
                 self._data = await self.ato_representation(self.validated_data)
             else:
                 self._data = self.get_initial()
@@ -82,13 +102,9 @@ class BaseSerializer(DRFBaseSerializer):
         raise NotImplementedError("`acreate()` must be implemented.")
 
     async def asave(self, **kwargs):
-        assert hasattr(
-            self, "_errors"
-        ), "You must call `.is_valid()` before calling `.asave()`."
+        assert hasattr(self, "_errors"), "You must call `.is_valid()` before calling `.asave()`."
 
-        assert (
-            not self.errors
-        ), "You cannot call `.asave()` on a serializer with invalid data."
+        assert not self.errors, "You cannot call `.asave()` on a serializer with invalid data."
 
         # Guard against incorrect use of `serializer.asave(commit=False)`
         assert "commit" not in kwargs, (
@@ -109,16 +125,32 @@ class BaseSerializer(DRFBaseSerializer):
 
         if self.instance is not None:
             self.instance = await self.aupdate(self.instance, validated_data)
-            assert (
-                self.instance is not None
-            ), "`aupdate()` did not return an object instance."
+            assert self.instance is not None, "`aupdate()` did not return an object instance."
         else:
             self.instance = await self.acreate(validated_data)
-            assert (
-                self.instance is not None
-            ), "`acreate()` did not return an object instance."
+            assert self.instance is not None, "`acreate()` did not return an object instance."
 
         return self.instance
+
+    async def ais_valid(self, *, raise_exception=False):
+        assert hasattr(self, "initial_data"), (
+            "Cannot call `.is_valid()` as no `data=` keyword argument was "
+            "passed when instantiating the serializer instance."
+        )
+
+        if not hasattr(self, "_validated_data"):
+            try:
+                self._validated_data = await self.arun_validation(self.initial_data)
+            except ValidationError as exc:
+                self._validated_data = {}
+                self._errors = exc.detail
+            else:
+                self._errors = {}
+
+        if self._errors and raise_exception:
+            raise ValidationError(self.errors)
+
+        return not bool(self._errors)
 
 
 class Serializer(BaseSerializer, DRFSerializer):
@@ -146,15 +178,11 @@ class Serializer(BaseSerializer, DRFSerializer):
             except SkipField:
                 continue
 
-            check_for_none = (
-                attribute.pk if isinstance(attribute, models.Model) else attribute
-            )
+            check_for_none = attribute.pk if isinstance(attribute, models.Model) else attribute
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                if asyncio.iscoroutinefunction(
-                    getattr(field, "ato_representation", None)
-                ):
+                if asyncio.iscoroutinefunction(getattr(field, "ato_representation", None)):
                     repr = await field.ato_representation(attribute)
                 else:
                     repr = field.to_representation(attribute)
@@ -198,14 +226,10 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
 
         if self.instance is not None:
             self.instance = await self.aupdate(self.instance, validated_data)
-            assert (
-                self.instance is not None
-            ), "`aupdate()` did not return an object instance."
+            assert self.instance is not None, "`aupdate()` did not return an object instance."
         else:
             self.instance = await self.acreate(validated_data)
-            assert (
-                self.instance is not None
-            ), "`acreate()` did not return an object instance."
+            assert self.instance is not None, "`acreate()` did not return an object instance."
 
         return self.instance
 
@@ -228,6 +252,46 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
 
 
 class ModelSerializer(Serializer, DRFModelSerializer):
+    serializer_field_mapping = {
+        models.AutoField: IntegerField,
+        models.BigIntegerField: IntegerField,
+        models.BooleanField: BooleanField,
+        models.CharField: CharField,
+        models.CommaSeparatedIntegerField: CharField,
+        models.DateField: DateField,
+        models.DateTimeField: DateTimeField,
+        models.DecimalField: DecimalField,
+        models.DurationField: DurationField,
+        models.EmailField: EmailField,
+        models.Field: ModelField,
+        models.FileField: FileField,
+        models.FloatField: FloatField,
+        models.ImageField: ImageField,
+        models.IntegerField: IntegerField,
+        models.NullBooleanField: BooleanField,
+        models.PositiveIntegerField: IntegerField,
+        models.PositiveSmallIntegerField: IntegerField,
+        models.SlugField: SlugField,
+        models.SmallIntegerField: IntegerField,
+        models.TextField: CharField,
+        models.TimeField: TimeField,
+        models.URLField: URLField,
+        models.UUIDField: UUIDField,
+        models.GenericIPAddressField: IPAddressField,
+        models.FilePathField: FilePathField,
+    }
+
+    if hasattr(models, "JSONField"):
+        serializer_field_mapping[models.JSONField] = JSONField
+    if postgres_fields:
+        serializer_field_mapping[postgres_fields.HStoreField] = HStoreField
+        serializer_field_mapping[postgres_fields.ArrayField] = ListField
+        serializer_field_mapping[postgres_fields.JSONField] = JSONField
+    serializer_related_field = PrimaryKeyRelatedField
+    serializer_related_to_field = SlugRelatedField
+    serializer_url_field = HyperlinkedIdentityField
+    serializer_choice_field = ChoiceField
+
     async def acreate(self, validated_data):
         """
         Create and return a new `Snippet` instance, given the validated data.

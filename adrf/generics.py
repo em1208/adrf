@@ -5,7 +5,8 @@ from django.http import Http404
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView as DRFGenericAPIView
 
-from adrf import mixins, views
+from adrf import mixins
+from adrf import views
 from adrf.shortcuts import aget_object_or_404 as _aget_object_or_404
 
 
@@ -39,8 +40,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         assert lookup_url_kwarg in self.kwargs, (
             "Expected view %s to be called with a URL keyword argument "
             'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            "attribute on the view correctly."
-            % (self.__class__.__name__, lookup_url_kwarg)
+            "attribute on the view correctly." % (self.__class__.__name__, lookup_url_kwarg)
         )
 
         filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
@@ -58,9 +58,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         if self.paginator is None:
             return None
         if asyncio.iscoroutinefunction(self.paginator.paginate_queryset):
-            return async_to_sync(self.paginator.paginate_queryset)(
-                queryset, self.request, view=self
-            )
+            return async_to_sync(self.paginator.paginate_queryset)(queryset, self.request, view=self)
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
     def get_paginated_response(self, data):
@@ -79,9 +77,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         if self.paginator is None:
             return None
         if asyncio.iscoroutinefunction(self.paginator.paginate_queryset):
-            return await self.paginator.paginate_queryset(
-                queryset, self.request, view=self
-            )
+            return await self.paginator.paginate_queryset(queryset, self.request, view=self)
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
     async def get_apaginated_response(self, data):
@@ -158,9 +154,7 @@ class ListCreateAPIView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericA
         return await self.acreate(request, *args, **kwargs)
 
 
-class RetrieveUpdateAPIView(
-    mixins.RetrieveModelMixin, mixins.UpdateModelMixin, GenericAPIView
-):
+class RetrieveUpdateAPIView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, GenericAPIView):
     """
     Concrete view for retrieving, updating a model instance.
     """
@@ -175,9 +169,7 @@ class RetrieveUpdateAPIView(
         return await self.partial_aupdate(request, *args, **kwargs)
 
 
-class RetrieveDestroyAPIView(
-    mixins.RetrieveModelMixin, mixins.DestroyModelMixin, GenericAPIView
-):
+class RetrieveDestroyAPIView(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, GenericAPIView):
     """
     Concrete view for retrieving or deleting a model instance.
     """

@@ -29,8 +29,7 @@ class SimpleRouter(DRFSimpleRouter):
         bound_methods = {}
         if getattr(viewset, "view_is_async", False):
             method_map = {
-                method: self.sync_to_async_action_map.get(action, action)
-                for method, action in method_map.items()
+                method: self.sync_to_async_action_map.get(action, action) for method, action in method_map.items()
             }
         for method, action in method_map.items():
             if hasattr(viewset, action):

@@ -1,4 +1,6 @@
-from django.test import Client, TestCase, override_settings
+from django.test import Client
+from django.test import override_settings
+from django.test import TestCase
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet as DRFModelViewSet
 
@@ -68,9 +70,7 @@ class _RouterIntegrationTests(TestCase):
         assert resp.data == {"method": "GET", "async": self.use_async}
 
     def test_create(self):
-        resp = self.client.post(
-            self.url, {"foo": "bar"}, content_type="application/json"
-        )
+        resp = self.client.post(self.url, {"foo": "bar"}, content_type="application/json")
         assert resp.status_code == 200
         assert resp.data == {
             "method": "POST",
@@ -88,9 +88,7 @@ class _RouterIntegrationTests(TestCase):
         }
 
     def test_update(self):
-        resp = self.client.put(
-            self.detail_url, {"foo": "bar"}, content_type="application/json"
-        )
+        resp = self.client.put(self.detail_url, {"foo": "bar"}, content_type="application/json")
         assert resp.status_code == 200
         assert resp.data == {
             "method": "PUT",
@@ -99,9 +97,7 @@ class _RouterIntegrationTests(TestCase):
         }
 
     def test_partial_update(self):
-        resp = self.client.patch(
-            self.detail_url, {"foo": "bar"}, content_type="application/json"
-        )
+        resp = self.client.patch(self.detail_url, {"foo": "bar"}, content_type="application/json")
         assert resp.status_code == 200
         assert resp.data == {
             "method": "PATCH",

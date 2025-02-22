@@ -3,9 +3,10 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIRequestFactory
 
-from adrf import generics, serializers
-
-from .models import Order, User
+from .models import Order
+from .models import User
+from adrf import generics
+from adrf import serializers
 
 factory = APIRequestFactory()
 

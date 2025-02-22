@@ -45,9 +45,7 @@ class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
         if data is None:
             return ("", content_type)
 
-        assert (
-            format is None or content_type is None
-        ), "You may not set both `format` and `content_type`."
+        assert format is None or content_type is None, "You may not set both `format` and `content_type`."
 
         if content_type:
             # Content type specified explicitly, treat data as a raw bytestring
@@ -55,14 +53,11 @@ class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
 
         else:
             format = format or self.default_format
-
+            avalible = ", ".join(["'" + fmt + "'" for fmt in self.renderer_classes])
             assert format in self.renderer_classes, (
-                "Invalid format '{}'. Available formats are {}. "
+                f"Invalid format '{format}'. Available formats are {avalible}. "
                 "Set TEST_REQUEST_RENDERER_CLASSES to enable "
-                "extra request formats.".format(
-                    format,
-                    ", ".join(["'" + fmt + "'" for fmt in self.renderer_classes]),
-                )
+                "extra request formats."
             )
 
             # Use format and render the data into a bytestring
@@ -72,7 +67,7 @@ class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
             # Determine the content-type header from the renderer
             content_type = renderer.media_type
             if renderer.charset:
-                content_type = "{}; charset={}".format(content_type, renderer.charset)
+                content_type = f"{content_type}; charset={renderer.charset}"
 
             # Coerce text to bytes if required.
             if isinstance(ret, str):
@@ -173,33 +168,23 @@ class AsyncAPIClient(DjangoAsyncClient, AsyncAPIRequestFactory):
         return response
 
     def post(self, path, data=None, format=None, content_type=None, **extra):
-        response = super().post(
-            path, data=data, format=format, content_type=content_type, **extra
-        )
+        response = super().post(path, data=data, format=format, content_type=content_type, **extra)
         return response
 
     def put(self, path, data=None, format=None, content_type=None, **extra):
-        response = super().put(
-            path, data=data, format=format, content_type=content_type, **extra
-        )
+        response = super().put(path, data=data, format=format, content_type=content_type, **extra)
         return response
 
     def patch(self, path, data=None, format=None, content_type=None, **extra):
-        response = super().patch(
-            path, data=data, format=format, content_type=content_type, **extra
-        )
+        response = super().patch(path, data=data, format=format, content_type=content_type, **extra)
         return response
 
     def delete(self, path, data=None, format=None, content_type=None, **extra):
-        response = super().delete(
-            path, data=data, format=format, content_type=content_type, **extra
-        )
+        response = super().delete(path, data=data, format=format, content_type=content_type, **extra)
         return response
 
     def options(self, path, data=None, format=None, content_type=None, **extra):
-        response = super().options(
-            path, data=data, format=format, content_type=content_type, **extra
-        )
+        response = super().options(path, data=data, format=format, content_type=content_type, **extra)
         return response
 
     def logout(self):

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "adrf"
-version = "0.1.9"
+version = "0.1.10"
 description = "Async support for Django REST framework"
 authors = ["Enrico Massa <enrico.massa@gmail.com>"]
 keywords = ["async", "django", "rest", "framework", "drf"]
@@ -11,7 +11,7 @@ repository = "https://github.com/em1208/adrf"
 include = ["LICENSE"]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.9"
 django = ">=4.1"
 djangorestframework = ">=3.14.0"
 async-property = ">=0.2.2"
@@ -23,6 +23,9 @@ pytest-django = "^4.8.0"
 tox = "^4.16.0"
 faker = "^26.1.0"
 ruff = "^0.5.5"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]

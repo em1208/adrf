@@ -1,11 +1,14 @@
 from django.core.handlers.asgi import ASGIRequest
-from django.test import TestCase, override_settings
-from django.urls import path, reverse
+from django.test import override_settings
+from django.test import TestCase
+from django.urls import path
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.response import Response
 
 from adrf.decorators import api_view
-from adrf.test import AsyncAPIClient, AsyncAPIRequestFactory
+from adrf.test import AsyncAPIClient
+from adrf.test import AsyncAPIRequestFactory
 
 
 @api_view(["GET", "POST", "PUT", "PATCH"])
@@ -45,9 +48,7 @@ class FactoryOnBasicViewTest(TestCase):
 
     def test_is_it_asgi(self):
         request = factory.request(path="/", method="GET")
-        assert isinstance(
-            request, ASGIRequest
-        ), f'Type of request is "{type(request).__name__}"'
+        assert isinstance(request, ASGIRequest), f'Type of request is "{type(request).__name__}"'
 
     def test_get_succeeds(self):
         request = factory.get("/")

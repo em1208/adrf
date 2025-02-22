@@ -1,7 +1,9 @@
 import asyncio
-from typing import List, Optional
+from typing import List
+from typing import Optional
 
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import async_to_sync
+from asgiref.sync import sync_to_async
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from rest_framework.throttling import BaseThrottle
@@ -27,9 +29,7 @@ class APIView(DRFAPIView):
 
             # Get the appropriate handler method
             if request.method.lower() in self.http_method_names:
-                handler = getattr(
-                    self, request.method.lower(), self.http_method_not_allowed
-                )
+                handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
             else:
                 handler = self.http_method_not_allowed
 
@@ -58,9 +58,7 @@ class APIView(DRFAPIView):
 
             # Get the appropriate handler method
             if request.method.lower() in self.http_method_names:
-                handler = getattr(
-                    self, request.method.lower(), self.http_method_not_allowed
-                )
+                handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
             else:
                 handler = self.http_method_not_allowed
 
@@ -119,9 +117,7 @@ class APIView(DRFAPIView):
         if sync_permissions:
             self.check_sync_permissions(request, sync_permissions)
 
-    async def check_async_permissions(
-        self, request: AsyncRequest, permissions: List[BasePermission]
-    ) -> None:
+    async def check_async_permissions(self, request: AsyncRequest, permissions: List[BasePermission]) -> None:
         """
         Check if the request should be permitted asynchronously.
         Raises an appropriate exception if the request is not permitted.
@@ -142,9 +138,7 @@ class APIView(DRFAPIView):
                     code=getattr(has_permission, "code", None),
                 )
 
-    def check_sync_permissions(
-        self, request: Request, permissions: List[BasePermission]
-    ) -> None:
+    def check_sync_permissions(self, request: Request, permissions: List[BasePermission]) -> None:
         """
         Check if the request should be permitted synchronously.
         Raises an appropriate exception if the request is not permitted.
@@ -173,9 +167,7 @@ class APIView(DRFAPIView):
                 sync_permissions.append(permission)
 
         if async_permissions:
-            async_to_sync(self.check_async_object_permissions)(
-                request, async_permissions, obj
-            )
+            async_to_sync(self.check_async_object_permissions)(request, async_permissions, obj)
 
         if sync_permissions:
             self.check_sync_object_permissions(request, sync_permissions, obj)
@@ -189,10 +181,7 @@ class APIView(DRFAPIView):
         """
 
         has_object_permissions = await asyncio.gather(
-            *[
-                permission.has_object_permission(request, self, obj)
-                for permission in permissions
-            ],
+            *[permission.has_object_permission(request, self, obj) for permission in permissions],
             return_exceptions=True,
         )
 
@@ -206,9 +195,7 @@ class APIView(DRFAPIView):
                     code=getattr(has_object_permission, "code", None),
                 )
 
-    def check_sync_object_permissions(
-        self, request: Request, permissions: List[BasePermission], obj
-    ) -> None:
+    def check_sync_object_permissions(self, request: Request, permissions: List[BasePermission], obj) -> None:
         """
         Check if the request should be permitted synchronously.
         Raises an appropriate exception if the request is not permitted.
@@ -244,16 +231,12 @@ class APIView(DRFAPIView):
 
         throttle_durations.extend(self.check_sync_throttles(request, sync_throttles))
 
-        throttle_durations.extend(
-            async_to_sync(self.check_async_throttles)(request, async_throttles)
-        )
+        throttle_durations.extend(async_to_sync(self.check_async_throttles)(request, async_throttles))
 
         if throttle_durations:
             # Filter out `None` values which may happen in case of config / rate
             # changes, see #1438
-            durations = [
-                duration for duration in throttle_durations if duration is not None
-            ]
+            durations = [duration for duration in throttle_durations if duration is not None]
 
             duration = max(durations, default=None)
             self.throttled(request, duration)
@@ -274,9 +257,7 @@ class APIView(DRFAPIView):
 
         return throttle_durations
 
-    def check_sync_throttles(
-        self, request: Request, throttles: List[BaseThrottle]
-    ) -> List[Optional[float]]:
+    def check_sync_throttles(self, request: Request, throttles: List[BaseThrottle]) -> List[Optional[float]]:
         """
         Check if the request should be throttled synchronously.
         Raises an appropriate exception if the request is throttled.

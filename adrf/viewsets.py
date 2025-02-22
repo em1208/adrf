@@ -64,15 +64,12 @@ class ViewSetMixin(DRFViewSetMixin):
                     "keyword argument to %s(). Don't do that." % (key, cls.__name__)
                 )
             if not hasattr(cls, key):
-                raise TypeError(
-                    "%s() received an invalid keyword %r" % (cls.__name__, key)
-                )
+                raise TypeError("%s() received an invalid keyword %r" % (cls.__name__, key))
 
         # name and suffix are mutually exclusive
         if "name" in initkwargs and "suffix" in initkwargs:
             raise TypeError(
-                "%s() received both `name` and `suffix`, which are "
-                "mutually exclusive arguments." % (cls.__name__)
+                "%s() received both `name` and `suffix`, which are " "mutually exclusive arguments." % (cls.__name__)
             )
 
         def view(request, *args, **kwargs):
@@ -157,9 +154,7 @@ class ViewSet(ViewSetMixin, APIView):
         """
         return any(
             asyncio.iscoroutinefunction(function)
-            for name, function in getmembers(
-                cls, inspect.iscoroutinefunction, exclude_names=["view_is_async"]
-            )
+            for name, function in getmembers(cls, inspect.iscoroutinefunction, exclude_names=["view_is_async"])
             if not name.startswith("__") and name not in cls._ASYNC_NON_DISPATCH_METHODS
         )
 
@@ -172,14 +167,10 @@ class GenericViewSet(ViewSet, GenericAPIView):
     ]
 
 
-class ReadOnlyModelViewSet(
-    mixins.RetrieveModelMixin, mixins.ListModelMixin, GenericViewSet
-):
+class ReadOnlyModelViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, GenericViewSet):
     """
     A viewset that provides default asynchronous `list()` and `retrieve()` actions.
     """
-
-    pass
 
 
 class ModelViewSet(
@@ -194,5 +185,3 @@ class ModelViewSet(
     A viewset that provides default asynchronous `create()`, `retrieve()`, `update()`,
     `partial_update()`, `destroy()` and `list()` actions.
     """
-
-    pass
