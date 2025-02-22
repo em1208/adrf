@@ -354,14 +354,24 @@ class ListField(DRFListField, AsyncField):
 
     async def ato_representation(self, value):
         result = []
-        for item in value:
-            if item is not None:
-                if hasattr(self.child, "ato_representation"):
-                    result.append(await self.child.ato_representation(item))
+        if hasattr(value, '__aiter__'):
+            async for item in value:
+                if item is not None:
+                    if hasattr(self.child, "ato_representation"):
+                        result.append(await self.child.ato_representation(item))
+                    else:
+                        result.append(self.child.to_representation(item))
                 else:
-                    result.append(self.child.to_representation(item))
-            else:
-                result.append(None)
+                    result.append(None)
+        else:
+            for item in value:
+                if item is not None:
+                    if hasattr(self.child, "ato_representation"):
+                        result.append(await self.child.ato_representation(item))
+                    else:
+                        result.append(self.child.to_representation(item))
+                else:
+                    result.append(None)
         return result
 
 

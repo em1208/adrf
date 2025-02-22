@@ -272,11 +272,18 @@ class ManyRelatedField(DRFManyRelatedField, AsyncField):
 
     async def ato_representation(self, iterable):
         result = []
-        for value in iterable:
-            if hasattr(self.child_relation, "ato_representation"):
-                result.append(await self.child_relation.ato_representation(value))
-            else:
-                result.append(self.child_relation.to_representation(value))
+        if hasattr(iterable, '__aiter__'):
+            async for value in iterable:
+                if hasattr(self.child_relation, "ato_representation"):
+                    result.append(await self.child_relation.ato_representation(value))
+                else:
+                    result.append(self.child_relation.to_representation(value))
+        else:
+            for value in iterable:
+                if hasattr(self.child_relation, "ato_representation"):
+                    result.append(await self.child_relation.ato_representation(value))
+                else:
+                    result.append(self.child_relation.to_representation(value))
         return result
 
     async def aget_choices(self, cutoff=None):
