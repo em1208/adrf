@@ -436,7 +436,9 @@ class HiddenField(DRFHiddenField, AsyncField):
 class SerializerMethodField(DRFSerializerMethodField, AsyncField):
     async def ato_representation(self, attribute):
         method = getattr(self.parent, self.method_name)
-        return await method(attribute)
+        if inspect.iscoroutinefunction(method):
+            return await method(attribute)
+        return method(attribute)
 
 
 class ModelField(DRFModelField, AsyncField):
