@@ -128,7 +128,7 @@ serializers.py
 
 ```python
 from adrf.serializers import Serializer
-from rest_framework import serializers
+from adrf import serializers
 
 class AsyncSerializer(Serializer):
     username = serializers.CharField()

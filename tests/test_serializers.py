@@ -2,7 +2,7 @@ from collections import ChainMap
 
 from asgiref.sync import sync_to_async
 from django.test import TestCase
-from rest_framework import serializers
+from adrf import serializers
 from rest_framework.test import APIRequestFactory
 
 from .models import Order

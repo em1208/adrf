@@ -126,9 +126,6 @@ async def aget_attribute(instance, attrs):
                 instance = getattr(instance, attr)
         except ObjectDoesNotExist:
             return None
-        except (AttributeError, KeyError):
-            # Если атрибут не найден, возвращаем None
-            return None
 
         # Если атрибут является callable-объектом, вызываем его
         if callable(instance):

@@ -10,7 +10,7 @@ from rest_framework.fields import SkipField
 from rest_framework.serializers import BaseSerializer as DRFBaseSerializer
 from rest_framework.serializers import LIST_SERIALIZER_KWARGS
 from rest_framework.serializers import ListSerializer as DRFListSerializer
-from rest_framework.serializers import model_meta
+from rest_framework.serializers import model_meta, api_settings, DjangoValidationError, get_error_detail, Mapping
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
 from rest_framework.serializers import raise_errors_on_nested_writes
 from rest_framework.serializers import Serializer as DRFSerializer
@@ -163,6 +163,43 @@ class Serializer(BaseSerializer, DRFSerializer):
         ret = await super().adata
 
         return ReturnDict(ret, serializer=self)
+    
+    async def ato_internal_value(self, data):
+        """
+        Dict of native values <- Dict of primitive datatypes.
+        """
+        if not isinstance(data, Mapping):
+            message = self.error_messages['invalid'].format(
+                datatype=type(data).__name__
+            )
+            raise ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='invalid')
+
+        ret = {}
+        errors = {}
+        fields = self._writable_fields
+
+        for field in fields:
+            validate_method = getattr(self, 'validate_' + field.field_name, None)
+            primitive_value = field.get_value(data)
+            try:
+                validated_value = await field.arun_validation(primitive_value)
+                if validate_method is not None:
+                    validated_value = validate_method(validated_value)
+            except ValidationError as exc:
+                errors[field.field_name] = exc.detail
+            except DjangoValidationError as exc:
+                errors[field.field_name] = get_error_detail(exc)
+            except SkipField:
+                pass
+            else:
+                self.set_value(ret, field.source_attrs, validated_value)
+
+        if errors:
+            raise ValidationError(errors)
+
+        return ret
 
     async def ato_representation(self, instance):
         """
@@ -174,7 +211,7 @@ class Serializer(BaseSerializer, DRFSerializer):
 
         for field in fields:
             try:
-                attribute = field.get_attribute(instance)
+                attribute = await field.aget_attribute(instance)
             except SkipField:
                 continue
 
@@ -249,9 +286,31 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
 
     async def acreate(self, validated_data):
         return [await self.child.acreate(attrs) for attrs in validated_data]
+    
+    async def ais_valid(self, *, raise_exception=False):
+        # This implementation is the same as the default,
+        # except that we use lists, rather than dicts, as the empty case.
+        assert hasattr(self, 'initial_data'), (
+            'Cannot call `.ais_valid()` as no `data=` keyword argument was '
+            'passed when instantiating the serializer instance.'
+        )
+
+        if not hasattr(self, '_validated_data'):
+            try:
+                self._validated_data = await self.arun_validation(self.initial_data)
+            except ValidationError as exc:
+                self._validated_data = []
+                self._errors = exc.detail
+            else:
+                self._errors = []
+
+        if self._errors and raise_exception:
+            raise ValidationError(self.errors)
+
+        return not bool(self._errors)
 
 
-class ModelSerializer(Serializer, DRFModelSerializer):
+class ModelSerializer(DRFModelSerializer, Serializer):
     serializer_field_mapping = {
         models.AutoField: IntegerField,
         models.BigIntegerField: IntegerField,

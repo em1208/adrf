@@ -39,6 +39,7 @@ from rest_framework.fields import TimeField as DRFTimeField
 from rest_framework.fields import URLField as DRFURLField
 from rest_framework.fields import UUIDField as DRFUUIDField
 from rest_framework.utils import html
+from asgiref.sync import sync_to_async
 
 from adrf.utils import aget_attribute
 
@@ -89,12 +90,12 @@ class AsyncFieldMixin:
                     if inspect.iscoroutinefunction(validator):
                         await validator(value, self)
                     else:
-                        validator(value, self)
+                        await sync_to_async(validator)(value, self)
                 else:
                     if inspect.iscoroutinefunction(validator):
                         await validator(value)
                     else:
-                        validator(value)
+                        await sync_to_async(validator)(value)
             except ValidationError as exc:
                 if isinstance(exc.detail, dict):
                     raise
@@ -159,7 +160,7 @@ class AsyncField(Field, AsyncFieldMixin):
         that should be used for this field.
         """
         try:
-            return aget_attribute(instance, self.source_attrs)
+            return await aget_attribute(instance, self.source_attrs)
         except BuiltinSignatureError as exc:
             msg = (
                 "Field source for `{serializer}.{field}` maps to a built-in "
@@ -432,7 +433,7 @@ class HiddenField(DRFHiddenField, AsyncField):
         return self.to_internal_value(data)
 
 
-class SerializerMethodField(DRFSerializerMethodField):
+class SerializerMethodField(DRFSerializerMethodField, AsyncField):
     async def ato_representation(self, attribute):
         method = getattr(self.parent, self.method_name)
         return await method(attribute)
