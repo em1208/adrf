@@ -6,7 +6,7 @@ from async_property import async_property
 from django.db import models
 from rest_framework.compat import postgres_fields
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import SkipField
+from rest_framework.fields import SkipField, html
 from rest_framework.serializers import BaseSerializer as DRFBaseSerializer
 from rest_framework.serializers import LIST_SERIALIZER_KWARGS
 from rest_framework.serializers import ListSerializer as DRFListSerializer
@@ -309,6 +309,67 @@ class ListSerializer(BaseSerializer, DRFListSerializer):
 
         return not bool(self._errors)
 
+    async def ato_internal_value(self, data):
+        """
+        List of dicts of native values <- List of dicts of primitive datatypes.
+        """
+        if html.is_html_input(data):
+            data = html.parse_html_list(data, default=[])
+
+        if not isinstance(data, list):
+            message = self.error_messages['not_a_list'].format(
+                input_type=type(data).__name__
+            )
+            raise ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='not_a_list')
+
+        if not self.allow_empty and len(data) == 0:
+            message = self.error_messages['empty']
+            raise ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='empty')
+
+        if self.max_length is not None and len(data) > self.max_length:
+            message = self.error_messages['max_length'].format(max_length=self.max_length)
+            raise ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='max_length')
+
+        if self.min_length is not None and len(data) < self.min_length:
+            message = self.error_messages['min_length'].format(min_length=self.min_length)
+            raise ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='min_length')
+
+        ret = []
+        errors = []
+
+        for item in data:
+            try:
+                validated = await self.arun_child_validation(item)
+            except ValidationError as exc:
+                errors.append(exc.detail)
+            else:
+                ret.append(validated)
+                errors.append({})
+
+        if any(errors):
+            raise ValidationError(errors)
+
+        return ret
+    
+    async def arun_child_validation(self, data):
+        """
+        Run validation on child serializer.
+        You may need to override this method to support multiple updates. For example:
+
+        self.child.instance = self.instance.get(pk=data['id'])
+        self.child.initial_data = data
+        return super().run_child_validation(data)
+        """
+        return await self.child.arun_validation(data)
+    
 
 class ModelSerializer(DRFModelSerializer, Serializer):
     serializer_field_mapping = {
