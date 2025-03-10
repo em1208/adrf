@@ -2,6 +2,7 @@ import inspect
 from typing import Mapping
 from typing import Union
 
+from asgiref.sync import sync_to_async
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import _UnvalidatedField
@@ -39,7 +40,6 @@ from rest_framework.fields import TimeField as DRFTimeField
 from rest_framework.fields import URLField as DRFURLField
 from rest_framework.fields import UUIDField as DRFUUIDField
 from rest_framework.utils import html
-from asgiref.sync import sync_to_async
 
 from adrf.utils import aget_attribute
 
@@ -354,7 +354,7 @@ class ListField(DRFListField, AsyncField):
 
     async def ato_representation(self, value):
         result = []
-        if hasattr(value, '__aiter__'):
+        if hasattr(value, "__aiter__"):
             async for item in value:
                 if item is not None:
                     if hasattr(self.child, "ato_representation"):
@@ -448,7 +448,7 @@ class SerializerMethodField(DRFSerializerMethodField, AsyncField):
         method = getattr(self.parent, self.method_name)
         if inspect.iscoroutinefunction(method):
             return await method(attribute)
-        return method(attribute)
+        return await sync_to_async(method)(attribute)
 
 
 class ModelField(DRFModelField, AsyncField):

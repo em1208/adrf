@@ -272,7 +272,7 @@ class ManyRelatedField(DRFManyRelatedField, AsyncField):
 
     async def ato_representation(self, iterable):
         result = []
-        if hasattr(iterable, '__aiter__'):
+        if hasattr(iterable, "__aiter__"):
             async for value in iterable:
                 if hasattr(self.child_relation, "ato_representation"):
                     result.append(await self.child_relation.ato_representation(value))

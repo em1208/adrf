@@ -1,6 +1,7 @@
 import inspect
 from collections.abc import Mapping
 
+from asgiref.sync import sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ForeignKey
 from django.db.models import Model
@@ -129,12 +130,12 @@ async def aget_attribute(instance, attrs):
             return None
 
         # Если атрибут является callable-объектом, вызываем его
-        
+
         try:
             if is_async_callable(instance):
                 instance = await instance()
             elif is_simple_callable(instance):
-                instance = instance()
+                instance = await sync_to_async(instance)()
         except (AttributeError, KeyError) as exc:
             # Если вызов callable вызвал исключение, поднимаем ValueError
             raise ValueError(f'Exception raised in callable attribute "{attr}"; original exception was: {exc}')
