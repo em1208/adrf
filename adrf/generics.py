@@ -1,6 +1,6 @@
 import asyncio
 
-from asgiref.sync import async_to_sync
+from asgiref.sync import async_to_sync, sync_to_async
 from django.http import Http404
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView as DRFGenericAPIView
@@ -82,7 +82,9 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
             return await self.paginator.paginate_queryset(
                 queryset, self.request, view=self
             )
-        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+        return await sync_to_async(self.paginator.paginate_queryset)(
+            queryset, self.request, view=self
+        )
 
     async def get_apaginated_response(self, data):
         """
@@ -91,7 +93,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         assert self.paginator is not None
         if asyncio.iscoroutinefunction(self.paginator.get_paginated_response):
             return await self.paginator.get_paginated_response(data)
-        return self.paginator.get_paginated_response(data)
+        return await sync_to_async(self.paginator.get_paginated_response)(data)
 
 
 # Concrete view classes that provide method handlers
