@@ -162,6 +162,8 @@ class ViewSet(ViewSetMixin, APIView):
 class GenericViewSet(ViewSet, GenericAPIView):
     _ASYNC_NON_DISPATCH_METHODS = ViewSet._ASYNC_NON_DISPATCH_METHODS + [
         "aget_object",
+        "aget_queryset",
+        "afilter_queryset",
         "apaginate_queryset",
         "get_apaginated_response",
     ]

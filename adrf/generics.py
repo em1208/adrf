@@ -1,6 +1,7 @@
 import asyncio
 
 from asgiref.sync import async_to_sync
+from asgiref.sync import sync_to_async
 from django.http import Http404
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView as DRFGenericAPIView
@@ -23,6 +24,12 @@ def aget_object_or_404(queryset, *filter_args, **filter_kwargs):
 
 class GenericAPIView(views.APIView, DRFGenericAPIView):
     """This generic API view supports async pagination."""
+
+    async def aget_queryset(self):
+        return await sync_to_async(self.get_queryset)()
+
+    async def afilter_queryset(self, queryset):
+        return await sync_to_async(self.filter_queryset)(queryset)
 
     async def aget_object(self):
         """

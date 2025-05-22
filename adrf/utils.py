@@ -129,7 +129,7 @@ async def aget_attribute(instance, attrs):
             return None
 
         # Если атрибут является callable-объектом, вызываем его
-        
+
         try:
             if is_async_callable(instance):
                 instance = await instance()
