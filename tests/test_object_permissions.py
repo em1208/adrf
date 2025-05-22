@@ -1,6 +1,7 @@
 from asgiref.sync import sync_to_async
 from django.http import HttpResponse
-from django.test import TestCase, override_settings
+from django.test import override_settings
+from django.test import TestCase
 from rest_framework.permissions import BasePermission
 from rest_framework.test import APIRequestFactory
 
@@ -59,17 +60,13 @@ class TestSyncObjectPermission(TestCase):
     async def test_sync_object_permission(self):
         request = factory.get("/sync/allow")
 
-        response = await ObjectPermissionTestView.as_view(
-            permission_classes=(SyncObjectPermission,)
-        )(request)
+        response = await ObjectPermissionTestView.as_view(permission_classes=(SyncObjectPermission,))(request)
 
         self.assertEqual(response.status_code, 200)
 
     async def test_sync_object_permission_reject(self):
         request = factory.get("/sync/reject")
 
-        response = await ObjectPermissionTestView.as_view(
-            permission_classes=(SyncObjectPermission,)
-        )(request)
+        response = await ObjectPermissionTestView.as_view(permission_classes=(SyncObjectPermission,))(request)
 
         self.assertEqual(response.status_code, 403)

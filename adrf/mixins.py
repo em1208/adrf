@@ -1,5 +1,5 @@
-from asgiref.sync import sync_to_async
-from rest_framework import mixins, status
+from rest_framework import mixins
+from rest_framework import status
 from rest_framework.response import Response
 
 
@@ -15,7 +15,7 @@ class CreateModelMixin(mixins.CreateModelMixin):
 
     async def acreate(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        await sync_to_async(serializer.is_valid)(raise_exception=True)
+        await serializer.ais_valid(raise_exception=True)
         await self.perform_acreate(serializer)
         data = await get_data(serializer)
         headers = self.get_success_headers(data)
@@ -31,7 +31,8 @@ class ListModelMixin(mixins.ListModelMixin):
     """
 
     async def alist(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        initial_queryset = await self.aget_queryset()
+        queryset = await self.afilter_queryset(initial_queryset)
 
         page = await self.apaginate_queryset(queryset)
         if page is not None:
@@ -65,7 +66,7 @@ class UpdateModelMixin(mixins.UpdateModelMixin):
         partial = kwargs.pop("partial", False)
         instance = await self.aget_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        await sync_to_async(serializer.is_valid)(raise_exception=True)
+        await serializer.ais_valid(raise_exception=True)
         await self.perform_aupdate(serializer)
 
         if getattr(instance, "_prefetched_objects_cache", None):

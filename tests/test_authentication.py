@@ -1,10 +1,13 @@
 import faker
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-from django.test import TestCase, override_settings
-from rest_framework import permissions, status
+from django.test import override_settings
+from django.test import TestCase
+from rest_framework import permissions
+from rest_framework import status
 from rest_framework.authentication import BaseAuthentication
-from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.decorators import authentication_classes
+from rest_framework.decorators import permission_classes
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.test import APIRequestFactory
 

@@ -1,5 +1,6 @@
 from django.http import HttpResponse
-from django.test import TestCase, override_settings
+from django.test import override_settings
+from django.test import TestCase
 from rest_framework.test import APIRequestFactory
 from rest_framework.throttling import BaseThrottle
 

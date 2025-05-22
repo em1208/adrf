@@ -2,13 +2,14 @@ from collections import ChainMap
 
 from asgiref.sync import sync_to_async
 from django.test import TestCase
-from rest_framework import serializers
 from rest_framework.test import APIRequestFactory
 
+from .models import Order
+from .models import User
+from adrf import serializers
 from adrf.fields import SerializerMethodField
-from adrf.serializers import ModelSerializer, Serializer
-
-from .models import Order, User
+from adrf.serializers import ModelSerializer
+from adrf.serializers import Serializer
 
 factory = APIRequestFactory()
 
@@ -101,9 +102,7 @@ class TestSerializer(TestCase):
         assert serializer.validated_data == {}
         assert await serializer.adata == {}
 
-        assert serializer.errors == {
-            "non_field_errors": ["Invalid data. Expected a dictionary, but got list."]
-        }
+        assert serializer.errors == {"non_field_errors": ["Invalid data. Expected a dictionary, but got list."]}
 
     async def test_partial_validation(self):
         data = {
@@ -164,9 +163,7 @@ class TestSerializer(TestCase):
         assert serializer.is_valid()
 
         # Update the object
-        updated_object = await serializer.aupdate(
-            default_object, serializer.validated_data
-        )
+        updated_object = await serializer.aupdate(default_object, serializer.validated_data)
 
         # Verify the object has been updated successfully
         assert isinstance(updated_object, MockObject)

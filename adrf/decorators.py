@@ -22,20 +22,15 @@ def api_view(http_method_names=None):
         #     WrappedAPIView.__doc__ = func.doc    <--- Not possible to do this
 
         # api_view applied without (method_names)
-        assert not (
-            isinstance(http_method_names, types.FunctionType)
-        ), "@api_view missing list of allowed HTTP methods"
+        assert not (isinstance(http_method_names, types.FunctionType)), "@api_view missing list of allowed HTTP methods"
 
         # api_view applied with eg. string instead of list of strings
         assert isinstance(http_method_names, (list, tuple)), (
-            "@api_view expected a list of strings, received %s"
-            % type(http_method_names).__name__
+            "@api_view expected a list of strings, received %s" % type(http_method_names).__name__
         )
 
         allowed_methods = set(http_method_names) | {"options"}
-        WrappedAPIView.http_method_names = [
-            method.lower() for method in allowed_methods
-        ]
+        WrappedAPIView.http_method_names = [method.lower() for method in allowed_methods]
 
         view_is_async = asyncio.iscoroutinefunction(func)
 
@@ -55,25 +50,15 @@ def api_view(http_method_names=None):
         WrappedAPIView.__name__ = func.__name__
         WrappedAPIView.__module__ = func.__module__
 
-        WrappedAPIView.renderer_classes = getattr(
-            func, "renderer_classes", APIView.renderer_classes
-        )
+        WrappedAPIView.renderer_classes = getattr(func, "renderer_classes", APIView.renderer_classes)
 
-        WrappedAPIView.parser_classes = getattr(
-            func, "parser_classes", APIView.parser_classes
-        )
+        WrappedAPIView.parser_classes = getattr(func, "parser_classes", APIView.parser_classes)
 
-        WrappedAPIView.authentication_classes = getattr(
-            func, "authentication_classes", APIView.authentication_classes
-        )
+        WrappedAPIView.authentication_classes = getattr(func, "authentication_classes", APIView.authentication_classes)
 
-        WrappedAPIView.throttle_classes = getattr(
-            func, "throttle_classes", APIView.throttle_classes
-        )
+        WrappedAPIView.throttle_classes = getattr(func, "throttle_classes", APIView.throttle_classes)
 
-        WrappedAPIView.permission_classes = getattr(
-            func, "permission_classes", APIView.permission_classes
-        )
+        WrappedAPIView.permission_classes = getattr(func, "permission_classes", APIView.permission_classes)
 
         WrappedAPIView.schema = getattr(func, "schema", APIView.schema)
 

@@ -1,11 +1,13 @@
 import asyncio
 
 from asgiref.sync import async_to_sync
+from asgiref.sync import sync_to_async
 from django.http import Http404
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView as DRFGenericAPIView
 
-from adrf import mixins, views
+from adrf import mixins
+from adrf import views
 from adrf.shortcuts import aget_object_or_404 as _aget_object_or_404
 
 
@@ -23,6 +25,12 @@ def aget_object_or_404(queryset, *filter_args, **filter_kwargs):
 class GenericAPIView(views.APIView, DRFGenericAPIView):
     """This generic API view supports async pagination."""
 
+    async def aget_queryset(self):
+        return await sync_to_async(self.get_queryset)()
+
+    async def afilter_queryset(self, queryset):
+        return await sync_to_async(self.filter_queryset)(queryset)
+
     async def aget_object(self):
         """
         Returns the object the view is displaying.
@@ -31,7 +39,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         queryset lookups.  Eg if objects are referenced using multiple
         keyword arguments in the url conf.
         """
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = await self.afilter_queryset(await self.aget_queryset())
 
         # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
@@ -39,8 +47,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         assert lookup_url_kwarg in self.kwargs, (
             "Expected view %s to be called with a URL keyword argument "
             'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            "attribute on the view correctly."
-            % (self.__class__.__name__, lookup_url_kwarg)
+            "attribute on the view correctly." % (self.__class__.__name__, lookup_url_kwarg)
         )
 
         filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
@@ -58,9 +65,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         if self.paginator is None:
             return None
         if asyncio.iscoroutinefunction(self.paginator.paginate_queryset):
-            return async_to_sync(self.paginator.paginate_queryset)(
-                queryset, self.request, view=self
-            )
+            return async_to_sync(self.paginator.paginate_queryset)(queryset, self.request, view=self)
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
     def get_paginated_response(self, data):
@@ -79,9 +84,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         if self.paginator is None:
             return None
         if asyncio.iscoroutinefunction(self.paginator.paginate_queryset):
-            return await self.paginator.paginate_queryset(
-                queryset, self.request, view=self
-            )
+            return await self.paginator.paginate_queryset(queryset, self.request, view=self)
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
     async def get_apaginated_response(self, data):
@@ -158,9 +161,7 @@ class ListCreateAPIView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericA
         return await self.acreate(request, *args, **kwargs)
 
 
-class RetrieveUpdateAPIView(
-    mixins.RetrieveModelMixin, mixins.UpdateModelMixin, GenericAPIView
-):
+class RetrieveUpdateAPIView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, GenericAPIView):
     """
     Concrete view for retrieving, updating a model instance.
     """
@@ -175,9 +176,7 @@ class RetrieveUpdateAPIView(
         return await self.partial_aupdate(request, *args, **kwargs)
 
 
-class RetrieveDestroyAPIView(
-    mixins.RetrieveModelMixin, mixins.DestroyModelMixin, GenericAPIView
-):
+class RetrieveDestroyAPIView(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, GenericAPIView):
     """
     Concrete view for retrieving or deleting a model instance.
     """
