@@ -448,7 +448,7 @@ class SerializerMethodField(DRFSerializerMethodField, AsyncField):
         method = getattr(self.parent, self.method_name)
         if inspect.iscoroutinefunction(method):
             return await method(attribute)
-        return method(attribute)
+        return await sync_to_async(method)(attribute)
 
 
 class ModelField(DRFModelField, AsyncField):
