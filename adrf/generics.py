@@ -39,7 +39,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         queryset lookups.  Eg if objects are referenced using multiple
         keyword arguments in the url conf.
         """
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = await self.afilter_queryset(await self.aget_queryset())
 
         # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
