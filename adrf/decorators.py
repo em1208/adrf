@@ -75,6 +75,10 @@ def api_view(http_method_names=None):
             func, "permission_classes", APIView.permission_classes
         )
 
+        WrappedAPIView.versioning_class = getattr(
+            func, "versioning_class", APIView.versioning_class
+        )
+
         WrappedAPIView.schema = getattr(func, "schema", APIView.schema)
 
         return WrappedAPIView.as_view()
