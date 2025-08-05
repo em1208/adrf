@@ -75,6 +75,14 @@ def api_view(http_method_names=None):
             func, "permission_classes", APIView.permission_classes
         )
 
+        WrappedAPIView.content_negotiation_class = getattr(
+            func, "content_negotiation_class", APIView.content_negotiation_class
+        )
+
+        WrappedAPIView.metadata_class = getattr(
+            func, "metadata_class", APIView.metadata_class
+        )
+
         WrappedAPIView.versioning_class = getattr(
             func, "versioning_class", APIView.versioning_class
         )
