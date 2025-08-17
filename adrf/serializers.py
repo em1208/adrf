@@ -2,9 +2,9 @@ import asyncio
 import traceback
 from collections import OrderedDict
 
+from asgiref.sync import sync_to_async
 from async_property import async_property
 from django.db import models
-from asgiref.sync import sync_to_async
 from rest_framework.fields import SkipField
 from rest_framework.serializers import (
     LIST_SERIALIZER_KWARGS,
