@@ -5,6 +5,7 @@ from collections import OrderedDict
 from async_property import async_property
 from django.db import models
 from rest_framework.fields import SkipField
+from rest_framework.relations import PKOnlyObject
 from rest_framework.serializers import (
     LIST_SERIALIZER_KWARGS,
     model_meta,
@@ -147,7 +148,7 @@ class Serializer(BaseSerializer, DRFSerializer):
                 continue
 
             check_for_none = (
-                attribute.pk if isinstance(attribute, models.Model) else attribute
+                attribute.pk if isinstance(attribute, PKOnlyObject) else attribute
             )
             if check_for_none is None:
                 ret[field.field_name] = None
