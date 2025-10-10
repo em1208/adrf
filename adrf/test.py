@@ -25,6 +25,12 @@ class AsyncForceAuthClientHandler(AsyncClientHandler):
         force_authenticate(request, self._force_user, self._force_token)
         return super().get_response(request)
 
+    async def get_response_async(self, request):
+        # This is the simplest place we can hook into to patch the
+        # request object.
+        force_authenticate(request, self._force_user, self._force_token)
+        return await super().get_response_async(request)
+
 
 class AsyncAPIRequestFactory(DjangoAsyncRequestFactory):
     renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
