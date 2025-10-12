@@ -20,5 +20,3 @@ jobs:
           python-version: 3.9
 
       - uses: pre-commit/action@v3.0.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}

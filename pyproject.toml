@@ -16,7 +16,7 @@ django = ">=4.1"
 djangorestframework = ">=3.14.0"
 async-property = ">=0.2.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
 pytest-cov = "^5.0.0"
 pytest-django = "^4.8.0"
