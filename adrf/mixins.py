@@ -5,7 +5,11 @@ from rest_framework.response import Response
 
 async def get_data(serializer):
     """Use adata if the serializer supports it, data otherwise."""
-    return await serializer.adata if hasattr(serializer, "adata") else await sync_to_async(lambda: serializer.data)()
+    return (
+        await serializer.adata
+        if hasattr(serializer, "adata")
+        else await sync_to_async(lambda: serializer.data)()
+    )
 
 
 class CreateModelMixin(mixins.CreateModelMixin):
