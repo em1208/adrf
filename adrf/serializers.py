@@ -159,7 +159,8 @@ class Serializer(BaseSerializer, DRFSerializer):
                 ):
                     repr = await field.ato_representation(attribute)
                 else:
-                    repr = field.to_representation(attribute)
+                    # Use sync_to_async to make synchronous operations async-safe
+                    repr = await sync_to_async(field.to_representation)(attribute)
 
                 ret[field.field_name] = repr
 
