@@ -122,6 +122,25 @@ urlpatterns = [
 
 ```
 
+## ModelViewSet Routing
+
+The `ModelViewSet` implementation included with adrf provides asynchronous CRUD actions (e.g., `aretrieve`, `acreate`, `aupdate`, and `alist`). However, these actions are not invoked by default when using the router implementation in `rest_framework`. To have these async methods mapped by default, use adrf's router instead:
+
+```python
+from django.urls import path, include
+from adrf import routers    # import the adrf router instead
+
+from . import views
+
+router = routers.DefaultRouter()
+router.register(r"async_viewset", views.AsyncModelViewSet, basename="async")
+
+urlpatterns = [
+    path("", include(router.urls)),
+]
+
+```
+
 # Async Serializers
 
 serializers.py
