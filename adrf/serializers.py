@@ -2,6 +2,7 @@ import asyncio
 import traceback
 from collections import OrderedDict
 
+from asgiref.sync import sync_to_async
 from async_property import async_property
 from django.db import models
 from rest_framework.fields import SkipField
@@ -143,7 +144,7 @@ class Serializer(BaseSerializer, DRFSerializer):
 
         for field in fields:
             try:
-                attribute = field.get_attribute(instance)
+                attribute = await sync_to_async(field.get_attribute)(instance)
             except SkipField:
                 continue
 
