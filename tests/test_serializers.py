@@ -8,7 +8,7 @@ from rest_framework.test import APIRequestFactory
 from adrf.fields import SerializerMethodField
 from adrf.serializers import ModelSerializer, Serializer
 
-from .models import Order, User
+from .models import ModelA, ModelB, Order, User
 
 factory = APIRequestFactory()
 
@@ -291,3 +291,92 @@ class TestSerializerWithSerializerMethodField(TestCase):
         assert serializer.is_valid()
         assert await serializer.adata == data_with_age
         assert serializer.errors == {}
+
+
+class TestNestedSerializer(TestCase):
+    def setUp(self) -> None:
+        class SerializerA(ModelSerializer):
+            class Meta:
+                model = ModelA
+                fields = ("name",)
+
+        class SerializerB(ModelSerializer):
+            class Meta:
+                model = ModelB
+                fields = ("fielda",)
+
+        self.serializer_a = SerializerA
+        self.serializer_b = SerializerB
+
+    def test_sync_serializer_valid(self):
+        # Test child model serializer
+        data = {
+            "name": "test",
+        }
+        serializer = self.serializer_a(data=data)
+        assert serializer.is_valid()
+        assert serializer.data == data
+        assert serializer.errors == {}
+        # Test parent model serializer
+        modela = ModelA.objects.create(**data)
+        nested_data = {"fielda": modela.id}
+        serializer = self.serializer_b(data=nested_data)
+        assert serializer.is_valid()
+        assert serializer.data == nested_data
+        assert serializer.errors == {}
+
+    async def test_async_serializer_valid(self):
+        # Test child model serializer
+        data = {
+            "name": "test",
+        }
+        serializer = self.serializer_a(data=data)
+        assert serializer.is_valid()
+        assert serializer.data == data
+        assert serializer.errors == {}
+        # Test parent model serializer
+        modela = await ModelA.objects.acreate(**data)
+        nested_data = {"fielda": modela.id}
+        serializer = self.serializer_b(data=nested_data)
+        assert await sync_to_async(serializer.is_valid)()
+        assert await serializer.adata == nested_data
+        assert serializer.errors == {}
+
+
+class TestModelDepthSerializer(TestCase):
+    def setUp(self) -> None:
+        class UserSerializer(ModelSerializer):
+            class Meta:
+                model = User
+                fields = "__all__"
+
+        class OrderSerializer(ModelSerializer):
+            class Meta:
+                model = Order
+                fields = ("id", "user", "name")
+                depth = 1
+
+        self.user_serializer = UserSerializer
+        self.order_serializer = OrderSerializer
+
+    async def test_order_serializer_for_depth_gt_0(self):
+        user = await User.objects.acreate(username="test")
+        # get an order with the fk user
+        order = await Order.objects.acreate(user=user, name="Test order")
+        # serializing the user is the most reproducible way to get its dict
+        # for testing
+        user_serializer = self.user_serializer(user)
+        data = {
+            "user": await user_serializer.adata,
+            "name": "Test order",
+            "id": 1,
+        }
+        # get the order serializer
+        order_serializer = self.order_serializer(order)
+        # calling `.adata` here will not include the nested user structure
+        # without the above `depth = 1` specification on the `Meta` object
+        # Additionally: this code raises `SynchronousOnlyOperation` when
+        # `sync_to_async` guards are not correctly in place in the callstack
+        assert await order_serializer.adata == data
+        print("HELLO", await order_serializer.adata, await user_serializer.adata)
+        assert (await order_serializer.adata)["user"] == await user_serializer.adata
