@@ -78,6 +78,7 @@ from adrf.decorators import api_view
 async def async_view(request):
     return Response({"message": "This is an async function based view."})
 ```
+
 # Async ViewSets
 
 For viewsets, all handler methods must be async too.
@@ -106,26 +107,11 @@ class AsyncViewSet(ViewSet):
 
 ```
 
-urls.py
-```python
-from django.urls import path, include
-from rest_framework import routers
-
-from . import views
-
-router = routers.DefaultRouter()
-router.register(r"async_viewset", views.AsyncViewSet, basename="async")
-
-urlpatterns = [
-    path("", include(router.urls)),
-]
-
-```
-
-## ModelViewSet Routing
+# ModelViewSet Routing
 
 The `ModelViewSet` implementation included with adrf provides asynchronous CRUD actions (e.g., `aretrieve`, `acreate`, `aupdate`, and `alist`). However, these actions are not invoked by default when using the router implementation in `rest_framework`. To have these async methods mapped by default, use adrf's router instead:
 
+urls.py
 ```python
 from django.urls import path, include
 from adrf import routers    # import the adrf router instead
