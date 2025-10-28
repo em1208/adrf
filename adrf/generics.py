@@ -9,13 +9,13 @@ from adrf import mixins, views
 from adrf.shortcuts import aget_object_or_404 as _aget_object_or_404
 
 
-def aget_object_or_404(queryset, *filter_args, **filter_kwargs):
+async def aget_object_or_404(queryset, *filter_args, **filter_kwargs):
     """
     Same as Django's standard shortcut, but make sure to also raise 404
     if the filter_kwargs don't match the required types.
     """
     try:
-        return _aget_object_or_404(queryset, *filter_args, **filter_kwargs)
+        return await _aget_object_or_404(queryset, *filter_args, **filter_kwargs)
     except (TypeError, ValueError, ValidationError):
         raise Http404
 
