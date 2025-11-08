@@ -58,9 +58,13 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         for backend in list(self.filter_backends):
             backend_instance = backend()
             if asyncio.iscoroutinefunction(backend_instance.filter_queryset):
-                queryset = await backend_instance.filter_queryset(self.request, queryset, self)
+                queryset = await backend_instance.filter_queryset(
+                    self.request, queryset, self
+                )
             else:
-                queryset = await sync_to_async(backend_instance.filter_queryset)(self.request, queryset, self)
+                queryset = await sync_to_async(backend_instance.filter_queryset)(
+                    self.request, queryset, self
+                )
         return queryset
 
     def paginate_queryset(self, queryset):
