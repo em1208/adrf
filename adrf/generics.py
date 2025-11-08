@@ -31,7 +31,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         queryset lookups.  Eg if objects are referenced using multiple
         keyword arguments in the url conf.
         """
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = await self.afilter_queryset(self.get_queryset())
 
         # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
@@ -50,6 +50,18 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         self.check_object_permissions(self.request, obj)
 
         return obj
+
+    async def afilter_queryset(self, queryset):
+        """
+        Given a queryset, filter it with whichever filter backend is in use.
+        """
+        for backend in list(self.filter_backends):
+            backend_instance = backend()
+            if asyncio.iscoroutinefunction(backend_instance.filter_queryset):
+                queryset = await backend_instance.filter_queryset(self.request, queryset, self)
+            else:
+                queryset = await sync_to_async(backend_instance.filter_queryset)(self.request, queryset, self)
+        return queryset
 
     def paginate_queryset(self, queryset):
         """
