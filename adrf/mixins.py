@@ -35,7 +35,7 @@ class ListModelMixin(mixins.ListModelMixin):
     """
 
     async def alist(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = await self.afilter_queryset(self.get_queryset())
 
         page = await self.apaginate_queryset(queryset)
         if page is not None:
