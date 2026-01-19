@@ -56,10 +56,6 @@ class BaseSerializer(DRFBaseSerializer):
     Base serializer class.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.override_await_attribs = {}
-
     @classmethod
     def many_init(cls, *args, **kwargs):
         allow_empty = kwargs.pop("allow_empty", None)
@@ -160,19 +156,20 @@ class BaseSerializer(DRFBaseSerializer):
 
     async def aget_attribute(self, instance):
         resolved_attrs = []
-        for attr in self.source_attrs:
-            if asyncio.iscoroutine(getattr(instance, self.override_await_attribs.get(attr, attr), None)):
-                if self.override_await_attribs.get(attr):
-                    awaited_attr_name = attr
+        source_attrs_copy = self.source_attrs.copy()
+        try:
+            for attr in self.source_attrs:
+                if asyncio.iscoroutine(getattr(instance, attr, None)):
+                    awaited_attr_name  = f"_{attr}_{uuid.uuid4()}" # We use uuid to not hit existing model field
+                    setattr(instance, awaited_attr_name, await getattr(instance, attr))
+                    resolved_attrs.append(awaited_attr_name)
                 else:
-                    awaited_attr_name = f"_{attr}_{uuid.uuid4()}"   # We use uuid to not hit existing model field
-                    self.override_await_attribs[awaited_attr_name] = attr
-                setattr(instance, awaited_attr_name, await getattr(instance, self.override_await_attribs.get(awaited_attr_name)))
-                resolved_attrs.append(awaited_attr_name)
-            else:
-                resolved_attrs.append(attr)
-        self.source_attrs = resolved_attrs  # It overrides self.source_attrs with custom attr name
-        return self.get_attribute(instance)
+                    resolved_attrs.append(attr)
+            self.source_attrs = resolved_attrs
+            attribute = self.get_attribute(instance)
+        finally:
+            self.source_attrs = source_attrs_copy
+        return attribute
 
 
 class Serializer(BaseSerializer, DRFSerializer):
