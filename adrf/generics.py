@@ -1,9 +1,8 @@
 import asyncio
 
 from asgiref.sync import async_to_sync, sync_to_async
-from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.exceptions import ValidationError
 from django.http import Http404
-from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.generics import GenericAPIView as DRFGenericAPIView
 
 from adrf import mixins, views
@@ -17,7 +16,7 @@ async def aget_object_or_404(queryset, *filter_args, **filter_kwargs):
     """
     try:
         return await _aget_object_or_404(queryset, *filter_args, **filter_kwargs)
-    except (TypeError, ValueError, DjangoValidationError, DRFValidationError):
+    except (TypeError, ValueError, ValidationError):
         raise Http404
 
 
