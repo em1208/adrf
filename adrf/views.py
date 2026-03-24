@@ -8,6 +8,7 @@ from rest_framework.throttling import BaseThrottle
 from rest_framework.views import APIView as DRFAPIView
 
 from adrf.requests import AsyncRequest
+from adrf.permissions import try_convert_operator
 
 
 class APIView(DRFAPIView):
@@ -98,6 +99,13 @@ class APIView(DRFAPIView):
             negotiator=self.get_content_negotiator(),
             parser_context=parser_context,
         )
+
+    def get_permissions(self):
+        permissions = super().get_permissions()
+        return [
+            try_convert_operator(permission)
+            for permission in permissions
+        ]
 
     def check_permissions(self, request: Request) -> None:
         permissions = self.get_permissions()

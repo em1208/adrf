@@ -1,7 +1,39 @@
 import asyncio
 
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from rest_framework import permissions
+
+
+def try_convert_operator(operator_instance):
+    if not is_perm_operator(operator_instance):
+        return operator_instance
+    if isinstance(operator_instance, permissions.AND):
+        operator_class = AAND
+        operands = [operator_instance.op1, operator_instance.op2]
+    elif isinstance(operator_instance, permissions.OR):
+        operator_class = AOR
+        operands = [operator_instance.op1, operator_instance.op2]
+    elif isinstance(operator_instance, permissions.NOT):
+        operator_class = ANOT
+        operands = [operator_instance.op1]
+    else:
+        raise TypeError(
+            f"Cannot translate sync operator class '{operator_instance.__class__.__name__}' to async"
+        )
+    operands = [
+        try_convert_operator(operand)
+        for operand in operands
+    ]
+    return operator_class(*operands)
+
+
+def is_perm_operator(operator_instance):
+    return isinstance(operator_instance, (permissions.AND, permissions.OR, permissions.NOT))
+
+
+def is_async_perm_operator(operator_instance):
+    return isinstance(operator_instance, (AAND, AOR, ANOT))
+
 
 class AsyncOperandHolderMixin:
     def __and__(self, other):
@@ -21,47 +53,44 @@ class AsyncOperandHolderMixin:
 
 
 class AsyncLogicOperatorMixin:
-    def __init__(self, op1, op2):
-        super().__init__(op1, op2)
-        self.op1_has_perm_is_async = asyncio.iscoroutinefunction(op1.has_permission)
-        self.op2_has_perm_is_async = asyncio.iscoroutinefunction(op2.has_permission)
-        self.op1_obj_perm_is_async = asyncio.iscoroutinefunction(op1.has_object_permission)
-        self.op2_obj_perm_is_async = asyncio.iscoroutinefunction(op2.has_object_permission)
-
     def _get_async_has_perm(self):
         async_has_perm_a = (
-            self.op1.has_permission if self.op1_has_perm_is_async else sync_to_async(self.op1.has_permission)
+            self.op1.has_permission
+            if asyncio.iscoroutinefunction(self.op1.has_permission) else sync_to_async(self.op1.has_permission)
         )
         async_has_perm_b = (
-            self.op2.has_permission if self.op2_has_perm_is_async else sync_to_async(self.op2.has_permission)
+            self.op2.has_permission
+            if asyncio.iscoroutinefunction(self.op2.has_permission) else sync_to_async(self.op2.has_permission)
         )
         return async_has_perm_a, async_has_perm_b
 
     def _get_async_has_obj_perm(self):
         async_obj_perm_a = (
             self.op1.has_object_permission
-            if self.op1_obj_perm_is_async else sync_to_async(self.op1.has_object_permission)
+            if asyncio.iscoroutinefunction(self.op1.has_object_permission)
+            else sync_to_async(self.op1.has_object_permission)
         )
         async_obj_perm_b = (
             self.op2.has_object_permission
-            if self.op2_obj_perm_is_async else sync_to_async(self.op2.has_object_permission)
+            if asyncio.iscoroutinefunction(self.op2.has_object_permission)
+            else sync_to_async(self.op2.has_object_permission)
         )
         return async_obj_perm_a, async_obj_perm_b
 
 
 class AsyncSingleLogicOperatorMixin:
-    def __init__(self, op1):
-        super().__init__(op1)
-        self.op1_has_perm_is_async = asyncio.iscoroutinefunction(op1.has_permission)
-        self.op1_obj_perm_is_async = asyncio.iscoroutinefunction(op1.has_object_permission)
-
     def _get_async_has_perm(self):
-        return self.op1.has_permission if self.op1_has_perm_is_async else sync_to_async(self.op1.has_permission)
+        return (
+            self.op1.has_permission
+            if asyncio.iscoroutinefunction(self.op1.has_permission)
+            else sync_to_async(self.op1.has_permission)
+        )
 
     def _get_async_has_obj_perm(self):
         return (
             self.op1.has_object_permission
-            if self.op1_obj_perm_is_async else sync_to_async(self.op1.has_object_permission)
+            if asyncio.iscoroutinefunction(self.op1.has_object_permission)
+            else sync_to_async(self.op1.has_object_permission)
         )
 
 
