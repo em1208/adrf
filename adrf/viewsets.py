@@ -1,5 +1,3 @@
-import asyncio
-import inspect
 from functools import update_wrapper
 
 from django.utils.decorators import classonlymethod
@@ -10,6 +8,11 @@ from adrf import mixins
 from adrf.generics import GenericAPIView
 from adrf.utils import getmembers
 from adrf.views import APIView
+
+try:
+    from inspect import iscoroutinefunction
+except:
+    from asyncio import iscoroutinefunction
 
 
 class ViewSetMixin(DRFViewSetMixin):
@@ -156,9 +159,9 @@ class ViewSet(ViewSetMixin, APIView):
         Checks whether any viewset methods are coroutines.
         """
         return any(
-            asyncio.iscoroutinefunction(function)
+            iscoroutinefunction(function)
             for name, function in getmembers(
-                cls, inspect.iscoroutinefunction, exclude_names=["view_is_async"]
+                cls, iscoroutinefunction, exclude_names=["view_is_async"]
             )
             if not name.startswith("__") and name not in cls._ASYNC_NON_DISPATCH_METHODS
         )
