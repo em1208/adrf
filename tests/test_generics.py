@@ -5,7 +5,7 @@ from rest_framework.test import APIRequestFactory
 
 from adrf import generics, serializers
 
-from .models import Order, User
+from .models import Order, User, UUIDModel
 
 factory = APIRequestFactory()
 
@@ -29,6 +29,17 @@ class ListUserView(generics.ListAPIView):
 class RetrieveUserView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+class UUIDModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UUIDModel
+        fields = ("id", "name")
+
+
+class RetrieveUUIDModelView(generics.RetrieveAPIView):
+    queryset = UUIDModel.objects.all()
+    serializer_class = UUIDModelSerializer
 
 
 class DestroyUserView(generics.DestroyAPIView):
@@ -89,6 +100,16 @@ class TestRetrieveUserView(TestCase):
         expected = {"username": "test"}
         assert response.status_code == status.HTTP_200_OK
         assert response.data == expected
+
+
+class TestRetrieveUUIDModelView(TestCase):
+    def setUp(self):
+        self.view = RetrieveUUIDModelView.as_view()
+
+    def test_get_invalid_uuid_returns_404(self):
+        request = factory.get("/")
+        response = async_to_sync(self.view)(request, pk="not-a-uuid")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestDestroyUserView(TestCase):

@@ -1,6 +1,6 @@
 from asgiref.sync import async_to_sync, sync_to_async
+from django.core.exceptions import ValidationError
 from django.http import Http404
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView as DRFGenericAPIView
 
 from adrf import mixins, views
