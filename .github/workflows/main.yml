@@ -28,7 +28,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install poetry
-      run: python -m pip install poetry==2.4.1
+      run: python -m pip install poetry==2.2.1
 
     - name: Install dependencies
       run: |
