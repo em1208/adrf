@@ -35,4 +35,5 @@ jobs:
         poetry install --no-interaction
 
     - name: Run tox targets for ${{ matrix.python-version }}
+      if: always()
       run: poetry run tox
