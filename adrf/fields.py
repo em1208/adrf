@@ -1,5 +1,9 @@
 from rest_framework import serializers as drf_serializers
-import asyncio
+
+try:
+    from inspect import iscoroutinefunction
+except ImportError:
+    from asyncio import iscoroutinefunction
 
 
 class SerializerMethodField(drf_serializers.SerializerMethodField):
@@ -10,9 +14,13 @@ class SerializerMethodField(drf_serializers.SerializerMethodField):
 
 class AsyncFieldMixin:
     async def ato_representation(self, value):
-        if asyncio.iscoroutine(value):
+        if iscoroutinefunction(value):
             value = await value
         return super().to_representation(value)
+
+
+class BigIntegerField(AsyncFieldMixin, drf_serializers.BigIntegerField):
+    pass
 
 
 class IntegerField(AsyncFieldMixin, drf_serializers.IntegerField):
@@ -84,10 +92,6 @@ class IPAddressField(AsyncFieldMixin, drf_serializers.IPAddressField):
 
 
 class ImageField(AsyncFieldMixin, drf_serializers.ImageField):
-    pass
-
-
-class IntegerField(AsyncFieldMixin, drf_serializers.IntegerField):
     pass
 
 

@@ -1,7 +1,10 @@
-import asyncio
-
 from asgiref.sync import sync_to_async
 from rest_framework import permissions
+
+try:
+    from inspect import iscoroutinefunction
+except ImportError:
+    from asyncio import iscoroutinefunction
 
 
 def try_convert_operator(operator_instance):
@@ -81,12 +84,12 @@ class AsyncLogicOperatorMixin:
     def get_async_has_perm(self):
         async_has_perm_a = (
             self.op1.has_permission
-            if asyncio.iscoroutinefunction(self.op1.has_permission)
+            if iscoroutinefunction(self.op1.has_permission)
             else sync_to_async(self.op1.has_permission)
         )
         async_has_perm_b = (
             self.op2.has_permission
-            if asyncio.iscoroutinefunction(self.op2.has_permission)
+            if iscoroutinefunction(self.op2.has_permission)
             else sync_to_async(self.op2.has_permission)
         )
         return async_has_perm_a, async_has_perm_b
@@ -94,12 +97,12 @@ class AsyncLogicOperatorMixin:
     def get_async_has_obj_perm(self):
         async_obj_perm_a = (
             self.op1.has_object_permission
-            if asyncio.iscoroutinefunction(self.op1.has_object_permission)
+            if iscoroutinefunction(self.op1.has_object_permission)
             else sync_to_async(self.op1.has_object_permission)
         )
         async_obj_perm_b = (
             self.op2.has_object_permission
-            if asyncio.iscoroutinefunction(self.op2.has_object_permission)
+            if iscoroutinefunction(self.op2.has_object_permission)
             else sync_to_async(self.op2.has_object_permission)
         )
         return async_obj_perm_a, async_obj_perm_b
@@ -113,14 +116,14 @@ class AsyncSingleLogicOperatorMixin:
     def get_async_has_perm(self):
         return (
             self.op1.has_permission
-            if asyncio.iscoroutinefunction(self.op1.has_permission)
+            if iscoroutinefunction(self.op1.has_permission)
             else sync_to_async(self.op1.has_permission)
         )
 
     def get_async_has_obj_perm(self):
         return (
             self.op1.has_object_permission
-            if asyncio.iscoroutinefunction(self.op1.has_object_permission)
+            if iscoroutinefunction(self.op1.has_object_permission)
             else sync_to_async(self.op1.has_object_permission)
         )
 
@@ -145,8 +148,8 @@ class AsyncOperandHolder(AsyncOperandHolderMixin, permissions.OperandHolder):
 
 class AAND(AsyncLogicOperatorMixin, permissions.AND):
     """
-    Asynchronous logical AND operator for permissions checks, based on the synchronous equivalent defined by rest
-    framework.
+    Asynchronous logical AND operator for permissions checks, based on
+    the synchronous equivalent defined by rest framework.
     """
 
     async def has_permission(self, request, view):
@@ -164,8 +167,8 @@ class AAND(AsyncLogicOperatorMixin, permissions.AND):
 
 class AOR(AsyncLogicOperatorMixin, permissions.OR):
     """
-    Asynchronous logical OR operator for permissions checks, based on the synchronous equivalent defined by rest
-    framework.
+    Asynchronous logical OR operator for permissions checks, based on
+    the synchronous equivalent defined by rest framework.
     """
 
     async def has_permission(self, request, view):
@@ -188,8 +191,8 @@ class AOR(AsyncLogicOperatorMixin, permissions.OR):
 
 class ANOT(AsyncSingleLogicOperatorMixin, permissions.NOT):
     """
-    Asynchronous logical NOT operator for permissions checks, based on the synchronous equivalent defined by rest
-    framework.
+    Asynchronous logical NOT operator for permissions checks, based on
+    the synchronous equivalent defined by rest framework.
     """
 
     async def has_permission(self, request, view):

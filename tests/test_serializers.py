@@ -5,10 +5,10 @@ from django.test import TestCase
 from rest_framework import serializers
 from rest_framework.test import APIRequestFactory
 
-from adrf.fields import SerializerMethodField
+from adrf.fields import ReadOnlyField, SerializerMethodField
 from adrf.serializers import ModelSerializer, Serializer
 
-from .models import ModelA, ModelB, Order, User, Parent, Child
+from .models import Child, ModelA, ModelB, Order, Parent, User
 
 factory = APIRequestFactory()
 
@@ -384,39 +384,51 @@ class TestModelDepthSerializer(TestCase):
 
 class TestModelAsyncPropertySerializer(TestCase):
     def setUp(self):
-        class ParentSerializer(aserializers.ModelSerializer):
-            custom_name = aserializers.CharField()
+        class ParentSerializer(ModelSerializer):
+            custom_name = ReadOnlyField()
+            custom_description = ReadOnlyField()
 
             class Meta:
                 model = Parent
-                fields = ["name", "custom_name", "custom_description"]
+                fields = ["name", "description", "custom_name", "custom_description"]
 
-
-        class ChildSerializer(aserializers.ModelSerializer):
-            custom_parent = TestSerializer()
+        class ChildSerializer(ModelSerializer):
+            parent = ParentSerializer()
+            custom_name = ReadOnlyField()
+            custom_parent = ReadOnlyField()
 
             class Meta:
                 model = Child
-                fields = ["custom_name", "custom_parent"]
+                fields = ["name", "parent", "custom_name", "custom_parent"]
 
         self.parent_serializer = ParentSerializer
         self.child_serializer = ChildSerializer
 
-        async def test_default_field_returns_value(self):
-            parent = Parent()
-            serializer = self.parent_serializer(instance=parent)
-            data = await serializer.adata
-            assert data["custom_description"] == await parent.custom_description
+    async def test_parent_serializer_returns_value(self):
+        parent = Parent()
+        serializer = self.parent_serializer(instance=parent)
+        data = await serializer.adata
+        assert data["name"] == parent.name
+        assert data["description"] == parent.description
+        assert await data["custom_name"] == await parent.custom_name
+        assert await data["custom_description"] == await parent.custom_description
 
-        async def test_provided_field_returns_value(self):
-            parent = Parent()
-            serializer = self.parent_serializer(instance=parent)
-            data = await serializer.adata
-            assert data["custom_name"] == await parent.custom_name
+    async def test_child_serializer_returns_value(self):
+        parent = Parent()
+        child = Child(parent=parent)
+        serializer = self.child_serializer(instance=child)
+        data = await serializer.adata
+        assert data["name"] == child.name
+        assert await data["custom_name"] == await child.custom_name
 
-        async def test_nested_serializer_returns_value(self):
-            parent = Parent()
-            child = Child(parent=parent)
-            serializer = self.child_serializer(instance=child)
-            data = await serializer.adata
-            assert data["custom_parent"]["custom_name"] == await parent.custom_name
+        base_parent = data["parent"]
+        assert base_parent["name"] == parent.name
+        assert await base_parent["custom_name"] == await parent.custom_name
+        assert (
+            await base_parent["custom_description"] == await parent.custom_description
+        )
+
+        custom_parent = await data["custom_parent"]
+        assert custom_parent.name == parent.name
+        assert await custom_parent.custom_name == await parent.custom_name
+        assert await custom_parent.custom_description == await parent.custom_description

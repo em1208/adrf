@@ -20,28 +20,28 @@ class ModelB(models.Model):
 class UUIDModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField()
-    
+
 
 class Parent(models.Model):
-    name = models.CharField(default="foo")
-    description = models.CharField(default="bar")
+    name = models.CharField(max_length=100, default="foo-parent")
+    description = models.CharField(max_length=100, default="bar-parent")
 
     @property
     async def custom_name(self):
-        return self.name
+        return f"custom-{self.name}"
 
     @property
     async def custom_description(self):
-        return self.description
+        return f"custom-{self.description}"
 
 
 class Child(models.Model):
-    name = models.CharField(default="foo")
+    name = models.CharField(max_length=100, default="foo-child")
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
 
     @property
     async def custom_name(self):
-        return self.name
+        return f"custom-{self.name}"
 
     @property
     async def custom_parent(self):
