@@ -35,5 +35,4 @@ jobs:
         poetry install --no-interaction
 
     - name: Run tox targets for ${{ matrix.python-version }}
-      if: always()
-      run: poetry run tox
+      run: poetry run tox -f py$(echo ${{ matrix.python-version }} | tr -d . | cut -f 1 -d '-')
