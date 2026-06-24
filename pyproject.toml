@@ -44,4 +44,4 @@ exclude_lines = [
 ]
 
 [tool.pytest]
-addopts="--tb=short --strict-markers -ra"
+addopts=["--tb=short", "--strict-markers", "-ra"]

@@ -1,7 +1,11 @@
-import asyncio
 import types
 
 from adrf.views import APIView
+
+try:
+    from inspect import iscoroutinefunction
+except ImportError:
+    from asyncio import iscoroutinefunction
 
 
 def api_view(http_method_names=None):
@@ -37,9 +41,7 @@ def api_view(http_method_names=None):
             method.lower() for method in allowed_methods
         ]
 
-        view_is_async = asyncio.iscoroutinefunction(func)
-
-        if view_is_async:
+        if iscoroutinefunction(func):
 
             async def handler(self, *args, **kwargs):
                 return await func(*args, **kwargs)

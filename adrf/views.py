@@ -9,6 +9,11 @@ from rest_framework.views import APIView as DRFAPIView
 
 from adrf.requests import AsyncRequest
 
+try:
+    from inspect import iscoroutinefunction
+except ImportError:
+    from asyncio import iscoroutinefunction
+
 
 class APIView(DRFAPIView):
     def sync_dispatch(self, request, *args, **kwargs):
@@ -64,7 +69,7 @@ class APIView(DRFAPIView):
             else:
                 handler = self.http_method_not_allowed
 
-            if asyncio.iscoroutinefunction(handler):
+            if iscoroutinefunction(handler):
                 response = await handler(request, *args, **kwargs)
             else:
                 response = await sync_to_async(handler)(request, *args, **kwargs)
@@ -108,7 +113,7 @@ class APIView(DRFAPIView):
         sync_permissions, async_permissions = [], []
 
         for permission in permissions:
-            if asyncio.iscoroutinefunction(permission.has_permission):
+            if iscoroutinefunction(permission.has_permission):
                 async_permissions.append(permission)
             else:
                 sync_permissions.append(permission)
@@ -167,7 +172,7 @@ class APIView(DRFAPIView):
         sync_permissions, async_permissions = [], []
 
         for permission in permissions:
-            if asyncio.iscoroutinefunction(permission.has_object_permission):
+            if iscoroutinefunction(permission.has_object_permission):
                 async_permissions.append(permission)
             else:
                 sync_permissions.append(permission)
@@ -237,7 +242,7 @@ class APIView(DRFAPIView):
         sync_throttles, async_throttles = [], []
 
         for throttle in throttles:
-            if asyncio.iscoroutinefunction(throttle.allow_request):
+            if iscoroutinefunction(throttle.allow_request):
                 async_throttles.append(throttle)
             else:
                 sync_throttles.append(throttle)

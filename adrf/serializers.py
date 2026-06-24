@@ -1,6 +1,6 @@
-import asyncio
 import traceback
 from collections import OrderedDict
+import uuid
 
 from asgiref.sync import sync_to_async
 from async_property import async_property
@@ -17,6 +17,42 @@ from rest_framework.serializers import ListSerializer as DRFListSerializer
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
 from rest_framework.serializers import Serializer as DRFSerializer
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
+from adrf.fields import (  # NOQA # isort:skip
+    BooleanField,
+    CharField,
+    ChoiceField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    DictField,
+    DurationField,
+    EmailField,
+    Field,
+    FileField,
+    FilePathField,
+    FloatField,
+    HiddenField,
+    HStoreField,
+    IPAddressField,
+    ImageField,
+    IntegerField,
+    JSONField,
+    ListField,
+    ModelField,
+    MultipleChoiceField,
+    ReadOnlyField,
+    RegexField,
+    SerializerMethodField,
+    SlugField,
+    TimeField,
+    URLField,
+    UUIDField,
+)
+
+try:
+    from inspect import iscoroutinefunction
+except ImportError:
+    from asyncio import iscoroutinefunction
 
 
 class BaseSerializer(DRFBaseSerializer):
@@ -122,6 +158,23 @@ class BaseSerializer(DRFBaseSerializer):
 
         return self.instance
 
+    async def aget_attribute(self, instance):
+        resolved_attrs = []
+        source_attrs_copy = self.source_attrs.copy()
+        try:
+            for attr in self.source_attrs:
+                if asyncio.iscoroutine(getattr(instance, attr, None)):
+                    awaited_attr_name  = f"_{attr}_{uuid.uuid4()}" # We use uuid to not hit existing model field
+                    setattr(instance, awaited_attr_name, await getattr(instance, attr))
+                    resolved_attrs.append(awaited_attr_name)
+                else:
+                    resolved_attrs.append(attr)
+            self.source_attrs = resolved_attrs
+            attribute = self.get_attribute(instance)
+        finally:
+            self.source_attrs = source_attrs_copy
+        return attribute
+
 
 class Serializer(BaseSerializer, DRFSerializer):
     @async_property
@@ -144,7 +197,12 @@ class Serializer(BaseSerializer, DRFSerializer):
 
         for field in fields:
             try:
-                attribute = await sync_to_async(field.get_attribute)(instance)
+                if asyncio.iscoroutinefunction(
+                    getattr(field, "aget_attribute", None)
+                ):
+                    attribute = await field.aget_attribute(instance)
+                else:
+                    attribute = await sync_to_async(field.get_attribute)(instance)
             except SkipField:
                 continue
 
@@ -154,9 +212,7 @@ class Serializer(BaseSerializer, DRFSerializer):
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                if asyncio.iscoroutinefunction(
-                    getattr(field, "ato_representation", None)
-                ):
+                if iscoroutinefunction(getattr(field, "ato_representation", None)):
                     repr = await field.ato_representation(attribute)
                 else:
                     # Use sync_to_async to make synchronous operations async-safe
@@ -299,3 +355,13 @@ class ModelSerializer(Serializer, DRFModelSerializer):
             await field.aset(value)
 
         return instance
+
+
+    def build_property_field(self, field_name, model_class):
+        """
+        Handle async properties without defined Field.
+        """
+        _, field_kwargs = super().build_property_field(field_name, model_class)
+        field_class = ReadOnlyField
+
+        return field_class, field_kwargs

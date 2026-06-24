@@ -1,8 +1,11 @@
-import asyncio
-
 from asgiref.sync import async_to_sync
 from rest_framework import exceptions
 from rest_framework.request import Request, wrap_attributeerrors
+
+try:
+    from inspect import iscoroutinefunction
+except ImportError:
+    from asyncio import iscoroutinefunction
 
 
 class AsyncRequest(Request):
@@ -42,7 +45,7 @@ class AsyncRequest(Request):
         """
         for authenticator in self.authenticators:
             try:
-                if asyncio.iscoroutinefunction(authenticator.authenticate):
+                if iscoroutinefunction(authenticator.authenticate):
                     user_auth_tuple = async_to_sync(authenticator.authenticate)(self)
                 else:
                     user_auth_tuple = authenticator.authenticate(self)

@@ -20,3 +20,29 @@ class ModelB(models.Model):
 class UUIDModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField()
+    
+
+class Parent(models.Model):
+    name = models.CharField(default="foo")
+    description = models.CharField(default="bar")
+
+    @property
+    async def custom_name(self):
+        return self.name
+
+    @property
+    async def custom_description(self):
+        return self.description
+
+
+class Child(models.Model):
+    name = models.CharField(default="foo")
+    parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
+
+    @property
+    async def custom_name(self):
+        return self.name
+
+    @property
+    async def custom_parent(self):
+        return self.parent

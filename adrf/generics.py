@@ -1,5 +1,3 @@
-import asyncio
-
 from asgiref.sync import async_to_sync, sync_to_async
 from django.core.exceptions import ValidationError
 from django.http import Http404
@@ -7,6 +5,11 @@ from rest_framework.generics import GenericAPIView as DRFGenericAPIView
 
 from adrf import mixins, views
 from adrf.shortcuts import aget_object_or_404 as _aget_object_or_404
+
+try:
+    from inspect import iscoroutinefunction
+except ImportError:
+    from asyncio import iscoroutinefunction
 
 
 async def aget_object_or_404(queryset, *filter_args, **filter_kwargs):
@@ -57,7 +60,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         """
         for backend in list(self.filter_backends):
             backend_instance = backend()
-            if asyncio.iscoroutinefunction(backend_instance.filter_queryset):
+            if iscoroutinefunction(backend_instance.filter_queryset):
                 queryset = await backend_instance.filter_queryset(
                     self.request, queryset, self
                 )
@@ -73,7 +76,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         """
         if self.paginator is None:
             return None
-        if asyncio.iscoroutinefunction(self.paginator.paginate_queryset):
+        if iscoroutinefunction(self.paginator.paginate_queryset):
             return async_to_sync(self.paginator.paginate_queryset)(
                 queryset, self.request, view=self
             )
@@ -84,7 +87,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         Return a paginated style `Response` object for the given output data.
         """
         assert self.paginator is not None
-        if asyncio.iscoroutinefunction(self.paginator.get_paginated_response):
+        if iscoroutinefunction(self.paginator.get_paginated_response):
             return async_to_sync(self.paginator.get_paginated_response)(data)
         return self.paginator.get_paginated_response(data)
 
@@ -94,7 +97,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         """
         if self.paginator is None:
             return None
-        if asyncio.iscoroutinefunction(self.paginator.paginate_queryset):
+        if iscoroutinefunction(self.paginator.paginate_queryset):
             return await self.paginator.paginate_queryset(
                 queryset, self.request, view=self
             )
@@ -107,7 +110,7 @@ class GenericAPIView(views.APIView, DRFGenericAPIView):
         Return a paginated style `Response` object for the given output data.
         """
         assert self.paginator is not None
-        if asyncio.iscoroutinefunction(self.paginator.get_paginated_response):
+        if iscoroutinefunction(self.paginator.get_paginated_response):
             return await self.paginator.get_paginated_response(data)
         return await sync_to_async(self.paginator.get_paginated_response)(data)
 
