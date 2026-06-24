@@ -19,7 +19,7 @@ from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 
 try:
     from inspect import iscoroutinefunction
-except:
+except ImportError:
     from asyncio import iscoroutinefunction
 
 
@@ -158,9 +158,7 @@ class Serializer(BaseSerializer, DRFSerializer):
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                if iscoroutinefunction(
-                    getattr(field, "ato_representation", None)
-                ):
+                if iscoroutinefunction(getattr(field, "ato_representation", None)):
                     repr = await field.ato_representation(attribute)
                 else:
                     # Use sync_to_async to make synchronous operations async-safe

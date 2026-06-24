@@ -4,7 +4,7 @@ from rest_framework.request import Request, wrap_attributeerrors
 
 try:
     from inspect import iscoroutinefunction
-except:
+except ImportError:
     from asyncio import iscoroutinefunction
 
 

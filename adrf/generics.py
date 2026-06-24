@@ -8,7 +8,7 @@ from adrf.shortcuts import aget_object_or_404 as _aget_object_or_404
 
 try:
     from inspect import iscoroutinefunction
-except:
+except ImportError:
     from asyncio import iscoroutinefunction
 
 

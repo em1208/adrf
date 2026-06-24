@@ -11,7 +11,7 @@ from adrf.requests import AsyncRequest
 
 try:
     from inspect import iscoroutinefunction
-except:
+except ImportError:
     from asyncio import iscoroutinefunction
 
 

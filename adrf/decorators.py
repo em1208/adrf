@@ -4,7 +4,7 @@ from adrf.views import APIView
 
 try:
     from inspect import iscoroutinefunction
-except:
+except ImportError:
     from asyncio import iscoroutinefunction
 
 
