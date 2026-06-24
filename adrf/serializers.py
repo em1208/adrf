@@ -1,4 +1,3 @@
-import asyncio
 import traceback
 from collections import OrderedDict
 
@@ -17,6 +16,11 @@ from rest_framework.serializers import ListSerializer as DRFListSerializer
 from rest_framework.serializers import ModelSerializer as DRFModelSerializer
 from rest_framework.serializers import Serializer as DRFSerializer
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
+
+try:
+    from inspect import iscoroutinefunction
+except:
+    from asyncio import iscoroutinefunction
 
 
 class BaseSerializer(DRFBaseSerializer):
@@ -154,7 +158,7 @@ class Serializer(BaseSerializer, DRFSerializer):
             if check_for_none is None:
                 ret[field.field_name] = None
             else:
-                if asyncio.iscoroutinefunction(
+                if iscoroutinefunction(
                     getattr(field, "ato_representation", None)
                 ):
                     repr = await field.ato_representation(attribute)
