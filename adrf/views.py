@@ -142,14 +142,14 @@ class APIView(DRFAPIView):
             return_exceptions=True,
         )
 
-        for has_permission in has_permissions:
+        for permission, has_permission in zip(permissions, has_permissions):
             if isinstance(has_permission, Exception):
                 raise has_permission
             elif not has_permission:
                 self.permission_denied(
                     request,
-                    message=getattr(has_permission, "detail", None),
-                    code=getattr(has_permission, "code", None),
+                    message=getattr(permission, "message", None),
+                    code=getattr(permission, "code", None),
                 )
 
     def check_sync_permissions(
@@ -164,7 +164,7 @@ class APIView(DRFAPIView):
             if not permission.has_permission(request, self):
                 self.permission_denied(
                     request,
-                    message=getattr(permission, "detail", None),
+                    message=getattr(permission, "message", None),
                     code=getattr(permission, "code", None),
                 )
 
@@ -206,14 +206,16 @@ class APIView(DRFAPIView):
             return_exceptions=True,
         )
 
-        for has_object_permission in has_object_permissions:
+        for permission, has_object_permission in zip(
+            permissions, has_object_permissions
+        ):
             if isinstance(has_object_permission, Exception):
                 raise has_object_permission
             elif not has_object_permission:
                 self.permission_denied(
                     request,
-                    message=getattr(has_object_permission, "detail", None),
-                    code=getattr(has_object_permission, "code", None),
+                    message=getattr(permission, "message", None),
+                    code=getattr(permission, "code", None),
                 )
 
     def check_sync_object_permissions(
@@ -228,7 +230,7 @@ class APIView(DRFAPIView):
             if not permission.has_object_permission(request, self, obj):
                 self.permission_denied(
                     request,
-                    message=getattr(permission, "detail", None),
+                    message=getattr(permission, "message", None),
                     code=getattr(permission, "code", None),
                 )
 
