@@ -214,3 +214,74 @@ class TestAsyncPermissionLogicOperators(TestCase):
         mock_async_accept.assert_awaited()
         mock_sync_reject.assert_called()
         self.assertEqual(response.status_code, 200)
+
+
+class AsyncMessagePermission(AsyncBasePermission):
+    message = "Async permission denied for a specific reason."
+    code = "async_denied"
+
+    async def has_permission(self, request, view):
+        return False
+
+
+class SyncMessagePermission(BasePermission):
+    message = "Sync permission denied for a specific reason."
+    code = "sync_denied"
+
+    def has_permission(self, request, view):
+        return False
+
+
+class AsyncAllowPermission(AsyncBasePermission):
+    message = "This permission allowed the request, so its message must not be used."
+
+    async def has_permission(self, request, view):
+        return True
+
+
+class MessageView(APIView):
+    # `permission_denied` short circuits to `NotAuthenticated` when the request
+    # carries authenticators but none succeeded, which would mask the message
+    # under test.
+    authentication_classes = ()
+
+    async def get(self, request):
+        return HttpResponse("ok")
+
+
+@override_settings(ROOT_URLCONF=__name__)
+class TestPermissionDeniedMessage(TestCase):
+    """The denial message and code are read from the permission that denied."""
+
+    async def test_async_permission_denied_message(self):
+        request = factory.get("/view/async/reject/")
+
+        response = await MessageView.as_view(
+            permission_classes=(AsyncMessagePermission,)
+        )(request)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["detail"], AsyncMessagePermission.message)
+        self.assertEqual(response.data["detail"].code, AsyncMessagePermission.code)
+
+    async def test_sync_permission_denied_message(self):
+        request = factory.get("/view/sync/reject/")
+
+        response = await MessageView.as_view(
+            permission_classes=(SyncMessagePermission,)
+        )(request)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["detail"], SyncMessagePermission.message)
+        self.assertEqual(response.data["detail"].code, SyncMessagePermission.code)
+
+    async def test_async_permission_denied_message_of_the_denying_permission(self):
+        """The message must come from the permission that actually returned False."""
+        request = factory.get("/view/async/reject/")
+
+        response = await MessageView.as_view(
+            permission_classes=(AsyncAllowPermission, AsyncMessagePermission)
+        )(request)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["detail"], AsyncMessagePermission.message)
