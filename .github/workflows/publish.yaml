@@ -1,0 +1,64 @@
+name: Publish
+
+on:
+  push:
+    branches:
+    - main
+    tags:
+    - v*.*
+
+permissions:
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+
+    - name: build package
+      run: |
+        python -m pip install -U build
+        python -m build
+
+    - name: upload build artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: dist
+        path: dist/
+
+  test_publish:  # Always publish to TestPyPI
+    runs-on: ubuntu-latest
+    name: upload release to TestPyPI
+    environment: testpypi
+    needs: build
+
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: dist
+
+    - name: Publish to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    name: upload release to PyPI
+    environment: pypi
+    needs: build
+
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: dist
+
+    - name: Publish to PyPI
+      if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@release/v1
